@@ -20,7 +20,7 @@ export default function OfflinePage() {
         </h1>
 
         <p className="lede mt-6">
-          Halaman ini belum pernah dibuka sejak Sandbox dipasang, jadi tidak ada salinannya di
+          Halaman ini belum pernah dibuka sejak Hypomonē dipasang, jadi tidak ada salinannya di
           perangkat ini. Halaman yang sudah pernah kamu buka tetap bisa dibaca tanpa jaringan.
         </p>
 

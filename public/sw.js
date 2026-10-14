@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Service worker Sandbox.
+   Service worker Hypomonē.
 
    Ditulis tangan, bukan lewat next-pwa atau Workbox, dengan alasan yang sama
    seperti grafik di situs ini digambar sendiri: yang dibutuhkan cuma tiga
@@ -25,7 +25,7 @@
 
 /* Naikkan versinya setiap kali berkas ini diubah: nama singgahan ikut berubah,
    dan singgahan versi lama dihapus saat activate. */
-const VERSI = 'sandbox-v1';
+const VERSI = 'hypomone-v1';
 const SINGGAHAN_STATIS = `${VERSI}-statis`;
 const SINGGAHAN_HALAMAN = `${VERSI}-halaman`;
 
@@ -61,7 +61,7 @@ self.addEventListener('message', event => {
 
 const statis = (url) =>
   url.pathname.startsWith('/_next/static/') ||
-  url.pathname.startsWith('/fonts/') ||
+  url.pathname.startsWith('/images/') ||
   url.pathname.startsWith('/icons/');
 
 async function dariSinggahanDulu(request) {

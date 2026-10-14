@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Bar, Kosong, Reveal } from '@/components/ui';
+import { Bar, Kosong, Reveal } from '@/components/kit';
 import { META, shortName } from '@/lib/courses/meta';
 import {
   bacaKorelasi, catatan, deretHarian, geserBulan, hariBulan, hariPekan, hariTerakhir, jam,

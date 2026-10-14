@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Bar, Rich } from '@/components/ui';
+import { Bar, Rich } from '@/components/kit';
 import { courseProgress, getEntry, setEntry, STATUSES, useStore } from '@/lib/store';
 import { parseFlag, stripEmoji } from '@/lib/text';
 import type { Topic } from '@/lib/types';
@@ -76,7 +76,7 @@ function TopicCard({
             {fy.words > 0 && (
               <span
                 className="flex items-center gap-1.5 text-[0.62rem] uppercase tracking-[0.12em] c-text"
-                title="Catatan Feynman tersimpan di perangkat ini"
+                title="Catatan Feynman tersimpan dan tersinkron"
               >
                 <span aria-hidden="true">✓</span>
                 Catatan {fy.words} kata
@@ -217,7 +217,7 @@ function TopicCard({
               </button>
             ))}
             <span className="ml-auto text-[0.62rem] uppercase tracking-[0.12em] muted">
-              Bobot: {DIFF_LABEL[t.d] || ', '}
+              Bobot: {DIFF_LABEL[t.d] || '–'}
             </span>
           </div>
         </div>

@@ -94,6 +94,26 @@ export default function SiteNav() {
               <SyncBadge />
               <button
                 type="button"
+                onClick={bukaSapaan}
+                aria-label="Sapaan hari ini"
+                title="Sapaan hari ini"
+                className="hidden size-[38px] items-center justify-center rounded-full text-secondary transition-colors hover:bg-navy-5 hover:text-navy lg:flex"
+              >
+                <Sparkles aria-hidden className="size-[18px]" />
+              </button>
+              {!localMode && (
+                <button
+                  type="button"
+                  onClick={keluar}
+                  aria-label="Keluar"
+                  title="Keluar"
+                  className="hidden size-[38px] items-center justify-center rounded-full text-secondary transition-colors hover:bg-red-pale hover:text-red lg:flex"
+                >
+                  <LogOut aria-hidden className="size-[18px]" />
+                </button>
+              )}
+              <button
+                type="button"
                 onClick={() => setSheet('menu')}
                 aria-label="Buka menu"
                 aria-expanded={sheet === 'menu'}
@@ -192,15 +212,6 @@ function DesktopLinks({ pathname, diMatkul }: { pathname: string; diMatkul: bool
                 <span className="text-[11.5px] font-medium text-muted">{t.ket}</span>
               </a>
             ))}
-            <div role="separator" className="mx-1 my-1.5 h-px bg-divider" />
-            <button type="button" onClick={() => { setBuka(null); bukaSapaan(); }} className={item}>
-              <Sparkles aria-hidden className="size-4" /> Sapaan hari ini
-            </button>
-            {!localMode && (
-              <button type="button" onClick={keluar} className={cn(item, 'text-red hover:bg-red-pale hover:text-red')}>
-                <LogOut aria-hidden className="size-4" /> Keluar
-              </button>
-            )}
           </div>
         )}
       </div>

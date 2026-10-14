@@ -1,17 +1,29 @@
 'use client';
 /* ==========================================================================
-   Penyimpanan progres, localStorage, satu sumber kebenaran di browser.
+   Store aplikasi. Satu sumber kebenaran di memori, disalin ke localStorage
+   untuk buka-cepat & luring, lalu disinkronkan ke Supabase (lib/sync.ts).
 
    · progress, status pemahaman + penjelasan Feynman per topik
    · scores, nilai per komponen, dipecah per instansi (Lab 1, Lab 2, …)
    · plans, rencana & checklist per minggu (kunci = tanggal Senin)
+   · harian, asdos, anggaran → tabel app_state (jsonb per bagian)
+   · transaksi & investasi   → tabel sendiri, per baris
+
+   API publik (getEntry, setEntry, addTransaksi, ...) sengaja tidak berubah
+   dari Sandbox, jadi komponen tidak perlu tahu datanya tinggal di mana.
    ========================================================================== */
 import { useSyncExternalStore } from 'react';
 import { KEBIASAAN_BAWAAN, WARNA_KEBIASAAN, type CatatanHari, type HarianState, type Kebiasaan, type Periode, type SesiFokus, type Target } from './harian';
-import type { Investasi, Transaksi } from './keuangan';
+import { ANGGARAN_KOSONG, type Anggaran, type Investasi, type Transaksi } from './keuangan';
+import {
+  investasiKeDb, isPending, pendingOps, queueDelete, queueSlice, queueUpsert, startSync,
+  transaksiKeDb, type RemoteData,
+} from './sync';
 import type { Topic } from './types';
 
-const KEY = 'monitor.v1';
+const KEY = 'hypomone.cache.v1';
+/** Kunci localStorage Sandbox lama, dibaca sekali untuk migrasi. */
+const KEY_LAMA = 'monitor.v1';
 
 export type Status = 'belum' | 'proses' | 'paham';
 
@@ -72,6 +84,7 @@ export interface StoreState {
   asdos: AsdosState;
   keuangan: KeuanganState;
   harian: HarianState;
+  anggaran: Anggaran;
 }
 
 const EMPTY_ASDOS: AsdosState = { info: {}, sessions: [], todos: [], topics: {} };
@@ -82,23 +95,28 @@ const EMPTY_HARIAN: HarianState = { kebiasaan: [], ceklis: {}, jurnal: {}, fokus
 
 const EMPTY: StoreState = {
   progress: {}, scores: {}, plans: {}, asdos: EMPTY_ASDOS, keuangan: EMPTY_KEUANGAN,
-  harian: EMPTY_HARIAN,
+  harian: EMPTY_HARIAN, anggaran: ANGGARAN_KOSONG,
 };
+
+function normal(d: Partial<StoreState>): StoreState {
+  return {
+    ...EMPTY,
+    ...d,
+    progress: { ...(d.progress || {}) },
+    scores: { ...(d.scores || {}) },
+    plans: { ...(d.plans || {}) },
+    asdos: { ...EMPTY_ASDOS, ...(d.asdos || {}) },
+    keuangan: { ...EMPTY_KEUANGAN, ...(d.keuangan || {}) },
+    harian: { ...EMPTY_HARIAN, ...(d.harian || {}) },
+    anggaran: { ...ANGGARAN_KOSONG, ...(d.anggaran || {}) },
+  };
+}
 
 function readAll(): StoreState {
   if (typeof window === 'undefined') return EMPTY;
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const d = JSON.parse(raw) as Partial<StoreState>;
-      return {
-        ...EMPTY,
-        ...d,
-        asdos: { ...EMPTY_ASDOS, ...(d.asdos || {}) },
-        keuangan: { ...EMPTY_KEUANGAN, ...(d.keuangan || {}) },
-        harian: { ...EMPTY_HARIAN, ...(d.harian || {}) },
-      };
-    }
+    if (raw) return normal(JSON.parse(raw) as Partial<StoreState>);
   } catch {
     /* JSON rusak → mulai bersih */
   }
@@ -119,13 +137,99 @@ const subscribe = (fn: () => void) => {
 const getSnapshot = () => state;
 const getServerSnapshot = () => EMPTY;
 
-function persist(next: StoreState) {
-  state = next;
+function simpanCache(next: StoreState) {
   try {
     localStorage.setItem(KEY, JSON.stringify(next));
   } catch {
     /* kuota penuh */
   }
+}
+
+/* ------------------------------------------------------------ bagian */
+/** Isi satu bagian app_state: progress:<cid>, scores:<cid>, plans, asdos, harian, anggaran. */
+function sliceData(st: StoreState, slice: string): unknown {
+  const [jenis, cid] = slice.split(':');
+  if (jenis === 'progress') return st.progress[cid] || {};
+  if (jenis === 'scores') return st.scores[cid] || {};
+  return st[jenis as 'plans' | 'asdos' | 'harian' | 'anggaran'];
+}
+
+function semuaSlice(st: StoreState): string[] {
+  const cids = new Set([...Object.keys(st.progress), ...Object.keys(st.scores)]);
+  return [...[...cids].flatMap(c => [`progress:${c}`, `scores:${c}`]), 'plans', 'asdos', 'harian', 'anggaran'];
+}
+
+/** Menulis state baru, lalu mengantre bagian yang berubah untuk dikirim ke Supabase. */
+function persist(next: StoreState, changed: string[] = []) {
+  state = next;
+  simpanCache(next);
+  changed.forEach(sl => queueSlice(sl, sliceData(next, sl)));
+  emit();
+}
+
+/* ------------------------------------------------- terima dari server */
+function terapkanRemote(r: RemoteData, pertama: boolean) {
+  const kosong = !Object.keys(r.slices).length && !r.transaksi.length && !r.investasi.length;
+
+  /* Migrasi sekali: server masih kosong tapi peramban ini punya data
+     (cache yang belum terkirim, atau data Sandbox lama di domain yang sama). */
+  if (pertama && kosong) {
+    let lama: unknown = null;
+    try {
+      const raw = localStorage.getItem(KEY_LAMA);
+      if (raw) lama = JSON.parse(raw);
+    } catch {
+      lama = null;
+    }
+    const sumber = lama && cadanganSah(lama) ? normal(lama as Partial<StoreState>) : state;
+    if (isiCadangan(sumber).total > 0) {
+      dorongSemua(sumber, [], []);
+      return;
+    }
+  }
+
+  const next = normal(state);
+  Object.entries(r.slices).forEach(([slice, data]) => {
+    if (isPending(`slice:${slice}`)) return;
+    const [jenis, cid] = slice.split(':');
+    if (jenis === 'progress') next.progress[cid] = (data || {}) as Record<string, Entry>;
+    else if (jenis === 'scores') next.scores[cid] = (data || {}) as Record<string, CompScore>;
+    else if (jenis === 'plans') next.plans = (data || {}) as StoreState['plans'];
+    else if (jenis === 'asdos') next.asdos = { ...EMPTY_ASDOS, ...((data || {}) as AsdosState) };
+    else if (jenis === 'harian') next.harian = { ...EMPTY_HARIAN, ...((data || {}) as HarianState) };
+    else if (jenis === 'anggaran') next.anggaran = { ...ANGGARAN_KOSONG, ...((data || {}) as Anggaran) };
+  });
+
+  /* Baris: data server + perubahan yang masih tertunda di antrean. */
+  const transaksi = new Map(r.transaksi.map(t => [t.id, t]));
+  const investasi = new Map(r.investasi.map(x => [x.id, x]));
+  const lokalT = new Map(state.keuangan.transaksi.map(t => [t.id, t]));
+  const lokalI = new Map(state.keuangan.investasi.map(x => [x.id, x]));
+  pendingOps().forEach(op => {
+    if (op.type === 'upsert') {
+      const id = String(op.row.id);
+      if (op.table === 'transaksi' && lokalT.has(id)) transaksi.set(id, lokalT.get(id)!);
+      if (op.table === 'investasi' && lokalI.has(id)) investasi.set(id, lokalI.get(id)!);
+    } else if (op.type === 'delete') {
+      (op.table === 'transaksi' ? transaksi : investasi).delete(op.id);
+    }
+  });
+  next.keuangan = { transaksi: urutTransaksi([...transaksi.values()]), investasi: [...investasi.values()] };
+
+  state = next;
+  simpanCache(next);
+  emit();
+}
+
+/** Menimpa server dengan isi `st`: semua bagian + semua baris. Baris di `hapusT`/`hapusI` dihapus. */
+function dorongSemua(st: StoreState, hapusT: string[], hapusI: string[]) {
+  state = st;
+  simpanCache(st);
+  semuaSlice(st).forEach(sl => queueSlice(sl, sliceData(st, sl)));
+  st.keuangan.transaksi.forEach(t => queueUpsert('transaksi', transaksiKeDb(t)));
+  st.keuangan.investasi.forEach(x => queueUpsert('investasi', investasiKeDb(x)));
+  hapusT.forEach(id => queueDelete('transaksi', id));
+  hapusI.forEach(id => queueDelete('investasi', id));
   emit();
 }
 
@@ -135,6 +239,7 @@ export function hydrate() {
   hydrated = true;
   state = readAll();
   emit();
+  startSync(terapkanRemote);
 }
 
 export function useStore(): StoreState {
@@ -157,7 +262,7 @@ export function getEntry(cid: string, tid: string): Entry {
 export function setEntry(cid: string, tid: string, patch: Partial<Entry>) {
   const progress = { ...state.progress, [cid]: { ...(state.progress[cid] || {}) } };
   progress[cid][tid] = { ...getEntry(cid, tid), ...patch, u: Date.now() };
-  persist({ ...state, progress });
+  persist({ ...state, progress }, [`progress:${cid}`]);
 }
 
 export interface CourseProgress {
@@ -202,7 +307,7 @@ function writeComp(cid: string, idx: number, next: CompScore, defaultN: number) 
   if (empty && next.n === defaultN) delete scores[cid][idx];
   else scores[cid][idx] = next;
   if (!Object.keys(scores[cid]).length) delete scores[cid];
-  persist({ ...state, scores });
+  persist({ ...state, scores }, [`scores:${cid}`]);
 }
 
 export function setSlot(cid: string, idx: number, slot: number, val: string, defaultN = 1) {
@@ -227,7 +332,7 @@ export function setSlotCount(cid: string, idx: number, n: number, defaultN = 1) 
 export function clearScores(cid: string) {
   const scores = { ...state.scores };
   delete scores[cid];
-  persist({ ...state, scores });
+  persist({ ...state, scores }, [`scores:${cid}`]);
 }
 
 /**
@@ -253,7 +358,7 @@ function writePlan(key: string, next: WeekPlanState) {
   const plans = { ...state.plans };
   if (!next.focus && !next.note && !(next.items || []).length) delete plans[key];
   else plans[key] = { ...next, u: Date.now() };
-  persist({ ...state, plans });
+  persist({ ...state, plans }, ['plans']);
 }
 
 export function setPlanField(key: string, field: 'focus' | 'note', value: string) {
@@ -297,7 +402,7 @@ export function getAsdos(): AsdosState {
 }
 
 function writeAsdos(next: AsdosState) {
-  persist({ ...state, asdos: next });
+  persist({ ...state, asdos: next }, ['asdos']);
 }
 
 export function setAsdosInfo(key: string, value: string) {
@@ -357,41 +462,81 @@ export function getKeuangan(): KeuanganState {
 }
 
 function writeKeuangan(next: KeuanganState) {
-  persist({ ...state, keuangan: next });
+  state = { ...state, keuangan: next };
+  simpanCache(state);
+  emit();
 }
 
-const idBaru = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const idBaru = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
 /* Transaksi selalu tersimpan urut dari yang terbaru supaya daftarnya tidak
    perlu diurutkan ulang setiap render. */
-export function addTransaksi(t: Omit<Transaksi, 'id'>) {
-  if (!t.jumlah || t.jumlah <= 0 || !t.tanggal) return;
+function urutTransaksi(d: Transaksi[]) {
+  return d.sort((a, b) => b.tanggal.localeCompare(a.tanggal) || b.id.localeCompare(a.id));
+}
+
+/** Mengembalikan id transaksi baru, atau null kalau isinya tidak sah. */
+export function addTransaksi(t: Omit<Transaksi, 'id'> & { id?: string }): string | null {
+  if (!t.jumlah || t.jumlah <= 0 || !t.tanggal) return null;
   const k = getKeuangan();
-  const daftar = [...k.transaksi, { ...t, id: idBaru() }].sort((a, b) =>
-    b.tanggal.localeCompare(a.tanggal) || b.id.localeCompare(a.id),
-  );
-  writeKeuangan({ ...k, transaksi: daftar });
+  const baru: Transaksi = { ...t, id: t.id || idBaru(), jumlah: Math.round(t.jumlah) };
+  writeKeuangan({ ...k, transaksi: urutTransaksi([...k.transaksi, baru]) });
+  queueUpsert('transaksi', transaksiKeDb(baru));
+  return baru.id;
+}
+
+export function patchTransaksi(id: string, patch: Partial<Omit<Transaksi, 'id'>>) {
+  const k = getKeuangan();
+  const lama = k.transaksi.find(t => t.id === id);
+  if (!lama) return;
+  const baru = { ...lama, ...patch };
+  if (!baru.jumlah || baru.jumlah <= 0) return;
+  writeKeuangan({ ...k, transaksi: urutTransaksi(k.transaksi.map(t => (t.id === id ? baru : t))) });
+  queueUpsert('transaksi', transaksiKeDb(baru));
 }
 
 export function removeTransaksi(id: string) {
   const k = getKeuangan();
   writeKeuangan({ ...k, transaksi: k.transaksi.filter(t => t.id !== id) });
+  queueDelete('transaksi', id);
 }
 
 export function addInvestasi(x: Omit<Investasi, 'id'>) {
   if (!x.nama.trim()) return;
   const k = getKeuangan();
-  writeKeuangan({ ...k, investasi: [...k.investasi, { ...x, id: idBaru() }] });
+  const baru = { ...x, id: idBaru() };
+  writeKeuangan({ ...k, investasi: [...k.investasi, baru] });
+  queueUpsert('investasi', investasiKeDb(baru));
 }
 
 export function patchInvestasi(id: string, patch: Partial<Investasi>) {
   const k = getKeuangan();
-  writeKeuangan({ ...k, investasi: k.investasi.map(x => (x.id === id ? { ...x, ...patch } : x)) });
+  const daftar = k.investasi.map(x => (x.id === id ? { ...x, ...patch } : x));
+  writeKeuangan({ ...k, investasi: daftar });
+  const baru = daftar.find(x => x.id === id);
+  if (baru) queueUpsert('investasi', investasiKeDb(baru));
 }
 
 export function removeInvestasi(id: string) {
   const k = getKeuangan();
   writeKeuangan({ ...k, investasi: k.investasi.filter(x => x.id !== id) });
+  queueDelete('investasi', id);
+}
+
+/* ------------------------------------------------------------ anggaran */
+export function getAnggaran(): Anggaran {
+  return state.anggaran || ANGGARAN_KOSONG;
+}
+
+export function setAnggaran(patch: Partial<Anggaran>) {
+  persist({ ...state, anggaran: { ...getAnggaran(), ...patch } }, ['anggaran']);
+}
+
+export function setAnggaranKategori(kategori: string, jumlah: number) {
+  const k = { ...getAnggaran().kategori };
+  if (jumlah > 0) k[kategori] = Math.round(jumlah);
+  else delete k[kategori];
+  setAnggaran({ kategori: k });
 }
 
 /* ========================== KEHIDUPAN HARIAN ==========================
@@ -404,7 +549,7 @@ export function getHarian(): HarianState {
 }
 
 function writeHarian(next: HarianState) {
-  persist({ ...state, harian: next });
+  persist({ ...state, harian: next }, ['harian']);
 }
 
 /* ---- kebiasaan ---- */
@@ -532,7 +677,7 @@ export function exportData(): Cadangan {
   return { ...state, version: 1, exportedAt: new Date().toISOString() };
 }
 
-const KUNCI_SAH = ['progress', 'scores', 'plans', 'asdos', 'keuangan', 'harian'] as const;
+const KUNCI_SAH = ['progress', 'scores', 'plans', 'asdos', 'keuangan', 'harian', 'anggaran'] as const;
 
 /**
  * Memastikan berkas yang dipilih memang cadangan Sandbox.
@@ -595,21 +740,23 @@ export function isiSekarang(): IsiCadangan {
 
 export function importData(d: unknown): boolean {
   if (!cadanganSah(d)) return false;
-  const c = d as Cadangan;
-  persist({
-    progress: c.progress || {},
-    scores: c.scores || {},
-    plans: c.plans || {},
-    asdos: { ...EMPTY_ASDOS, ...(c.asdos || {}) },
-    keuangan: { ...EMPTY_KEUANGAN, ...(c.keuangan || {}) },
-    harian: { ...EMPTY_HARIAN, ...(c.harian || {}) },
-  });
+  const c = normal(d as Cadangan);
+  const masukT = new Set(c.keuangan.transaksi.map(t => t.id));
+  const masukI = new Set(c.keuangan.investasi.map(x => x.id));
+  /* Matkul yang ada di perangkat ini tapi tidak ada di berkas ikut dikosongkan. */
+  Object.keys(state.progress).forEach(cid => (c.progress[cid] ||= {}));
+  Object.keys(state.scores).forEach(cid => (c.scores[cid] ||= {}));
+  dorongSemua(
+    c,
+    state.keuangan.transaksi.filter(t => !masukT.has(t.id)).map(t => t.id),
+    state.keuangan.investasi.filter(x => !masukI.has(x.id)).map(x => x.id),
+  );
   return true;
 }
 
 export function resetAll() {
-  persist({
-    progress: {}, scores: {}, plans: {}, asdos: EMPTY_ASDOS, keuangan: EMPTY_KEUANGAN,
-    harian: EMPTY_HARIAN,
-  });
+  const kosong = normal({});
+  Object.keys(state.progress).forEach(cid => (kosong.progress[cid] = {}));
+  Object.keys(state.scores).forEach(cid => (kosong.scores[cid] = {}));
+  dorongSemua(kosong, state.keuangan.transaksi.map(t => t.id), state.keuangan.investasi.map(x => x.id));
 }

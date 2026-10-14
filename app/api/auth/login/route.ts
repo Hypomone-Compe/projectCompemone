@@ -26,9 +26,14 @@ export async function POST(request: Request) {
   const supabase = (await getServerSupabase())!;
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    const pesan = /rate|too many/i.test(error.message)
+    const m = error.message || '';
+    const pesan = /rate|too many/i.test(m)
       ? 'Terlalu banyak percobaan. Tunggu beberapa menit.'
-      : 'Email atau kata sandi salah.';
+      : /not confirmed/i.test(m)
+        ? 'Email belum dikonfirmasi. Di Supabase: Authentication → Users → pilih user → Confirm email.'
+        : /invalid login credentials/i.test(m)
+          ? 'Email atau kata sandi salah.'
+          : `Supabase menolak: ${m}`;
     return NextResponse.json({ error: pesan }, { status: 401 });
   }
   return NextResponse.json({ ok: true });

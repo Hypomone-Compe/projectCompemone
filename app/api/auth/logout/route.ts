@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { cookieOptions } from '@/lib/auth';
+import { getServerSupabase } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
 export async function POST() {
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set({ ...cookieOptions, value: '', maxAge: 0 });
-  return res;
+  const supabase = await getServerSupabase();
+  await supabase?.auth.signOut();
+  return NextResponse.json({ ok: true });
 }

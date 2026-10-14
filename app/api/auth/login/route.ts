@@ -1,33 +1,35 @@
 import { NextResponse } from 'next/server';
-import { authConfigured, checkCredentials, cookieOptions, createSession } from '@/lib/auth';
+import { isAllowedEmail, supabaseConfigured } from '@/lib/supabase/config';
+import { getServerSupabase } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 
+/* Masuk dengan email + kata sandi. Email selain pemilik ditolak SEBELUM
+   Supabase dihubungi, dengan pesan yang sama seperti sandi salah supaya
+   halaman ini tidak bisa dipakai menebak alamat mana yang terdaftar. */
 export async function POST(request: Request) {
-  if (!authConfigured) {
+  if (!supabaseConfigured) {
     return NextResponse.json(
-      { error: 'Situs belum dikonfigurasi: set AUTH_EMAIL, AUTH_PASSWORD, dan AUTH_SECRET.' },
+      { error: 'Supabase belum dikonfigurasi: isi NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY.' },
       { status: 503 },
     );
   }
 
-  let body: { email?: string; password?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Permintaan tidak valid.' }, { status: 400 });
-  }
+  const body = (await request.json().catch(() => ({}))) as { email?: string; password?: string };
+  const email = String(body.email || '').trim().toLowerCase();
+  const password = String(body.password || '');
 
-  const { email, password } = body || {};
-
-  if (!checkCredentials(email, password)) {
-    /* Jeda kecil supaya percobaan tebak-tebakan tidak murah. */
-    await new Promise(r => setTimeout(r, 600));
+  if (!isAllowedEmail(email) || !password) {
     return NextResponse.json({ error: 'Email atau kata sandi salah.' }, { status: 401 });
   }
 
-  const token = await createSession(String(email).trim().toLowerCase());
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set({ ...cookieOptions, value: token });
-  return res;
+  const supabase = (await getServerSupabase())!;
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    const pesan = /rate|too many/i.test(error.message)
+      ? 'Terlalu banyak percobaan. Tunggu beberapa menit.'
+      : 'Email atau kata sandi salah.';
+    return NextResponse.json({ error: pesan }, { status: 401 });
+  }
+  return NextResponse.json({ ok: true });
 }

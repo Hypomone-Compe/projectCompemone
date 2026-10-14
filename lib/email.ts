@@ -15,8 +15,12 @@ import {
 import { ACARA_FLAGS, DEADLINE_FLAGS, FLAG_LABEL, type Flag, type Flagged } from './text';
 import type { Day } from './types';
 
-export const RECIPIENT = (process.env.NOTIFY_TO || process.env.AUTH_EMAIL || '').trim();
-const FROM = process.env.NOTIFY_FROM || 'Sandbox <onboarding@resend.dev>';
+import { emailConfigured, RECIPIENT } from './email-config';
+import type { DataPribadi } from './email-pribadi';
+import { rupiah } from './keuangan';
+
+export { emailConfigured, RECIPIENT };
+const FROM = process.env.NOTIFY_FROM || 'Hypomone <onboarding@resend.dev>';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || '';
 
 /* --------------------------------------------------------------- konten */
@@ -93,6 +97,8 @@ export interface Digest {
   labTetap: { hari: string; name: string; accent: string; time: string; room: string }[];
   remaining: { n: number; range: string; count: number }[];
   timetable: { day: string; sessions: Sesi[] }[];
+  /** Checklist, keuangan, dan progres prioritas dari Supabase. Diisi route cron/kirim. */
+  pribadi?: DataPribadi | null;
 }
 
 /* Mengumpulkan acara terjadwal (kuis / lab / demo) dari satu pekan. Deadline
@@ -139,7 +145,7 @@ export function buildDigest(today: string = todayYmd()): Digest {
 
   /* getUTCDay() memberi 0 untuk Minggu, dan tidak ada kelas di hari itu. */
   const dow = parseYmd(today).getUTCDay();
-  const sesiHariIni = dow >= 1 && dow <= 5 ? sesi(dow as Day) : [];
+  const sesiHariIni = dow >= 1 && dow <= 6 ? sesi(dow as Day) : [];
 
   /* Slot lab tetap dikumpulkan dari jadwal SIAK, bukan dari rencana mingguan:
      ini yang berulang tiap pekan dan paling sering tertukar harinya. */
@@ -158,7 +164,11 @@ export function buildDigest(today: string = todayYmd()): Digest {
       : 'Semester sudah selesai';
 
   const acaraIni = acara.filter(a => a.pekan === 'ini').length;
-  const subjek = acaraIni ? `${headline} · ${acaraIni} kuis/lab` : headline;
+  /* Email harian: subjek dimulai dari hari ini supaya terbaca dari daftar kotak masuk. */
+  const kelas = sesiHariIni.length ? `${sesiHariIni.length} kelas` : 'tanpa kelas';
+  const subjek = [`${DAY_NAMES[dow]}, ${kelas}`, headline, acaraIni ? `${acaraIni} kuis/lab pekan ini` : '']
+    .filter(Boolean)
+    .join(' · ');
 
   return {
     today,
@@ -184,14 +194,15 @@ const esc = (s: unknown): string =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-/* Palet sama dengan situs. Email tidak bisa memuat webfont, jadi Poppins
-   diganti stack sans sistem dan Instrument Serif diganti Georgia. */
-const PAPER = '#f3f0e7';
-const INK = '#12120f';
-const MUTE = '#66665c';
-const RULE = '#d5d0c2';
+/* Palet design system situs (navy, pink, putih). Email tidak bisa memuat
+   webfont, jadi Plus Jakarta Sans diganti stack sans sistem. */
+const PAPER = '#f5f6fa';
+const INK = '#0b102d';
+const MUTE = '#5c6077';
+const RULE = '#e7e7ec';
 const WHITE = '#ffffff';
-const LIME = '#c9f24d';
+const LIME = '#ffced8';
+const PINK = '#d64c6f';
 const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 const SERIF = "Georgia, 'Iowan Old Style', serif";
 
@@ -206,7 +217,7 @@ function taskRows(courses: CourseBlock[]) {
   return courses
     .map(
       c => `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 10px;background:${WHITE};border:1px solid ${RULE};border-left:4px solid ${c.accent};border-radius:4px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 10px;background:${WHITE};border:1px solid ${RULE};border-left:4px solid ${c.accent};border-radius:12px;">
       <tr><td style="padding:14px 16px;">
         <div style="font:600 11px/1 ${SANS};letter-spacing:.14em;text-transform:uppercase;color:${c.accent};">${esc(c.name)}<span style="color:${MUTE};font-weight:500;"> &nbsp;·&nbsp; ${esc(c.label)}</span></div>
         <div style="margin-top:7px;font:700 16px/1.25 ${SANS};letter-spacing:-.02em;color:${INK};">${esc(c.title)}</div>
@@ -304,7 +315,7 @@ function acaraBlock(acara: Acara[], labTetap: Digest['labTetap']) {
       </div>`
     : '';
 
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${WHITE};border:1px solid ${RULE};border-left:4px solid ${INK};border-radius:4px;">
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${WHITE};border:1px solid ${RULE};border-left:4px solid ${INK};border-radius:12px;">
     <tr><td style="padding:16px 18px;">
       <div style="font:700 12px/1 ${SANS};letter-spacing:.14em;text-transform:uppercase;color:${INK};">Kuis &amp; lab</div>
       ${
@@ -317,11 +328,16 @@ function acaraBlock(acara: Acara[], labTetap: Digest['labTetap']) {
   </table>`;
 }
 
-/* Sesi kuliah pada hari email dikirim. Karena email jatuh Senin, Rabu, dan
-   Jumat pagi, blok ini praktis jadi rundown hari itu. */
+/* Sesi kuliah pada hari email dikirim. Email terkirim setiap pagi, jadi
+   blok ini adalah rundown hari itu. */
 function hariIniBlock(hari: string, sesi: Sesi[]) {
-  if (!sesi.length) return '';
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${LIME};border-radius:4px;">
+  if (!sesi.length) {
+    return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${LIME};border-radius:12px;">
+    <tr><td style="padding:15px 18px;font:400 13px/1.6 ${SANS};color:${INK};">
+      <b>${esc(hari)}: tidak ada kelas.</b> Satu sesi fokus 50 menit untuk SDA atau PBP sudah cukup berarti hari ini.
+    </td></tr></table>`;
+  }
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${LIME};border-radius:12px;">
     <tr><td style="padding:15px 18px;">
       <div style="font:700 11px/1 ${SANS};letter-spacing:.16em;text-transform:uppercase;color:${INK};">Hari ini, ${esc(hari)}</div>
       ${sesi
@@ -338,10 +354,48 @@ function hariIniBlock(hari: string, sesi: Sesi[]) {
   </table>`;
 }
 
+/* Bagian pribadi: checklist yang belum dicentang, uang kemarin, progres prioritas. */
+function pribadiBlock(p: DataPribadi) {
+  const checklist = p.checklist.length
+    ? p.checklist
+        .slice(0, 8)
+        .map(
+          c => `<div style="margin-top:7px;font:400 13px/1.55 ${SANS};color:#2a2f4a;">&#9744;&nbsp; ${
+            c.matkul ? `<b style="color:${c.accent || INK};">${esc(c.matkul)}</b> ` : ''
+          }${esc(c.teks)}</div>`,
+        )
+        .join('')
+    : `<div style="margin-top:7px;font:400 13px/1.55 ${SANS};color:${MUTE};">${
+        p.checklistSelesai ? `Semua ${p.checklistSelesai} item minggu ini sudah selesai.` : 'Checklist minggu ini masih kosong. Tambahkan dari kotak kalender di beranda.'
+      }</div>`;
+
+  const sisa = p.bulanIni.anggaran > 0 ? p.bulanIni.anggaran - p.bulanIni.keluar : null;
+  const uang = `<div style="margin-top:7px;font:400 13px/1.6 ${SANS};color:#2a2f4a;">
+      Kemarin: <b>${p.kemarin.jumlah ? `${rupiah(p.kemarin.keluar)} (${p.kemarin.jumlah} transaksi)` : 'tidak ada pengeluaran tercatat'}</b><br>
+      Bulan ini keluar <b>${rupiah(p.bulanIni.keluar)}</b>${
+        sisa != null ? `, ${sisa >= 0 ? `sisa anggaran <b>${rupiah(sisa)}</b>` : `<b style="color:${PINK};">lewat anggaran ${rupiah(-sisa)}</b>`}` : ''
+      }.
+    </div>`;
+
+  const prio = p.prioritas
+    .map(
+      x => `<div style="margin-top:7px;font:400 13px/1.55 ${SANS};color:#2a2f4a;">
+      <b style="color:${x.accent};">${esc(x.nama)}</b> &nbsp;${x.paham}/${x.total} topik ditandai paham
+      <div style="margin-top:4px;height:6px;border-radius:99px;background:${RULE};"><div style="height:6px;border-radius:99px;background:${x.accent};width:${x.total ? Math.round((x.paham / x.total) * 100) : 0}%;"></div></div>
+    </div>`,
+    )
+    .join('');
+
+  const kotak = (judul: string, isi: string) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;background:${WHITE};border:1px solid ${RULE};border-radius:12px;">
+    <tr><td style="padding:15px 18px;">${eyebrow(judul, PINK)}${isi}</td></tr></table>`;
+
+  return kotak(`Checklist minggu ini · ${p.checklist.length} belum`, checklist) + kotak('Uang', uang) + (prio ? kotak('Prioritas: SDA & PBP', prio) : '');
+}
+
 export function renderDigestHtml(d: Digest): string {
   const cur = d.current;
   const cta = SITE_URL
-    ? `<a href="${esc(SITE_URL)}" style="display:inline-block;background:${INK};color:${PAPER};text-decoration:none;font:600 12px/1 ${SANS};letter-spacing:.12em;text-transform:uppercase;padding:15px 26px;border-radius:999px;">Buka monitoring →</a>`
+    ? `<a href="${esc(SITE_URL)}" style="display:inline-block;background:${PINK};color:${WHITE};text-decoration:none;font:600 12px/1 ${SANS};letter-spacing:.12em;text-transform:uppercase;padding:15px 26px;border-radius:999px;">Buka Hypomon&#275; →</a>`
     : `<span style="font:400 12px ${SANS};color:${MUTE};">Set NEXT_PUBLIC_SITE_URL agar tombol ke situs muncul di sini.</span>`;
 
   return `<!doctype html>
@@ -354,9 +408,9 @@ export function renderDigestHtml(d: Digest): string {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;">
 
   <!-- kepala gelap -->
-  <tr><td style="background:${INK};padding:26px 26px 30px;border-radius:0 0 4px 4px;">
+  <tr><td style="background:${INK};padding:26px 26px 30px;border-radius:0 0 20px 20px;">
     <table role="presentation" width="100%"><tr>
-      <td style="font:800 17px/1 ${SANS};letter-spacing:-.04em;color:${PAPER};">SANDBOX</td>
+      <td style="font:800 17px/1 ${SANS};letter-spacing:-.03em;color:${WHITE};">Hypomon&#275; <span style="color:${LIME};">@GRIT</span></td>
       <td align="right">${eyebrow('Gasal 26 / 27', '#93938a')}</td>
     </tr></table>
 
@@ -377,7 +431,9 @@ export function renderDigestHtml(d: Digest): string {
     }
   </td></tr>
 
-  ${d.sesiHariIni.length ? `<tr><td style="padding:22px 4px 0;">${hariIniBlock(d.hari, d.sesiHariIni)}</td></tr>` : ''}
+  <tr><td style="padding:22px 4px 0;">${hariIniBlock(d.hari, d.sesiHariIni)}</td></tr>
+
+  ${d.pribadi ? `<tr><td style="padding:4px 4px 0;">${pribadiBlock(d.pribadi)}</td></tr>` : ''}
 
   ${
     d.status.phase === 'run'
@@ -436,7 +492,7 @@ export function renderDigestHtml(d: Digest): string {
 
   <tr><td style="padding:26px 4px 0;">
     <p style="margin:0;padding-top:16px;border-top:1px solid ${RULE};font:400 11px/1.7 ${SANS};color:${MUTE};">
-      Dikirim otomatis dari Sandbox, situs monitoring pribadimu. Agenda disusun dari BRP tiap mata kuliah, 
+      Dikirim otomatis setiap pagi dari Hypomonē @GRIT, situs monitoring pribadimu. Agenda disusun dari BRP tiap mata kuliah, 
       selalu verifikasi ke SCeLE dan pengumuman dosen sebelum bergantung padanya.
     </p>
   </td></tr>
@@ -445,11 +501,19 @@ export function renderDigestHtml(d: Digest): string {
 }
 
 export function renderDigestText(d: Digest): string {
-  const L: string[] = ['SANDBOX, Gasal 2026/2027', fmtDateLong(d.today), '', d.headline.toUpperCase()];
+  const L: string[] = ['HYPOMONĒ @GRIT, Gasal 2026/2027', fmtDateLong(d.today), '', d.headline.toUpperCase()];
 
   if (d.sesiHariIni.length) {
     L.push('', `HARI INI, ${d.hari.toUpperCase()}`);
     d.sesiHariIni.forEach(x => L.push(`  ${x.time} ${x.name}${x.kind !== 'Kelas' ? ` [${x.kind}]` : ''} (${x.room})`));
+  }
+
+  if (d.pribadi) {
+    const p = d.pribadi;
+    L.push('', `CHECKLIST MINGGU INI (${p.checklist.length} belum)`);
+    p.checklist.slice(0, 8).forEach(c => L.push(`  [ ] ${c.matkul ? `${c.matkul}: ` : ''}${c.teks}`));
+    L.push('', `UANG: kemarin ${rupiah(p.kemarin.keluar)}, bulan ini keluar ${rupiah(p.bulanIni.keluar)}`);
+    p.prioritas.forEach(x => L.push(`PRIORITAS ${x.nama}: ${x.paham}/${x.total} topik paham`));
   }
 
   if (d.status.phase === 'run') {
@@ -495,9 +559,7 @@ export function renderDigestText(d: Digest): string {
 }
 
 /* ------------------------------------------------------------- kirim */
-export function emailConfigured(): boolean {
-  return !!process.env.RESEND_API_KEY;
-}
+
 
 export interface SendResult {
   ok: boolean;
@@ -515,14 +577,14 @@ export async function sendDigest({
   digest,
 }: { to?: string; digest?: Digest } = {}): Promise<SendResult> {
   const d = digest || buildDigest();
-  const subject = `[Sandbox] ${d.subjek}`;
+  const subject = `[Hypomonē] ${d.subjek}`;
 
   if (!emailConfigured()) {
     return { ok: false, skipped: true, reason: 'RESEND_API_KEY belum di-set.', subject };
   }
 
   if (!to) {
-    return { ok: false, skipped: true, reason: 'Alamat penerima kosong: set NOTIFY_TO atau AUTH_EMAIL.', subject };
+    return { ok: false, skipped: true, reason: 'Alamat penerima kosong: set NOTIFY_TO.', subject };
   }
 
   const res = await fetch('https://api.resend.com/emails', {

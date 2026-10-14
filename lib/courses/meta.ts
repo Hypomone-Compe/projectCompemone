@@ -14,8 +14,11 @@ const pbp: CourseMeta = {
   name: 'Pemrograman Berbasis Platform',
   code: 'CSGE602022',
   sks: 4,
-  accent: '#c0431f',
+  accent: '#c13a5c',
   accentOn: '#ffffff',
+  pale: '#fff2f5',
+  fokus: true,
+  cover: '',
   icon: '📱',
   dosen: 'Iis Afriyanti, S.Kom., M.Sc. · Jessica Naraiswari Arwidarasti, S.Kom., M.Kom.',
   sessions: [
@@ -33,8 +36,11 @@ const sda: CourseMeta = {
   name: 'Struktur Data & Algoritma',
   code: 'CSGE602040',
   sks: 4,
-  accent: '#2b46f0',
+  accent: '#3a4c8c',
   accentOn: '#ffffff',
+  pale: '#eef1f9',
+  fokus: true,
+  cover: '',
   icon: '🌳',
   dosen: 'Lintang Matahari Hasani, S.Kom., M.Kom., Ph.D.',
   sessions: [
@@ -53,8 +59,10 @@ const basdat: CourseMeta = {
   name: 'Basis Data',
   code: 'CSGE602070 / CSF2600700',
   sks: 4,
-  accent: '#12683f',
+  accent: '#16784a',
   accentOn: '#ffffff',
+  pale: '#e9f6ef',
+  cover: '',
   icon: '🗄️',
   dosen: 'Ilma Alpha Mannix, M.Kom.',
   sessions: [
@@ -73,8 +81,10 @@ const os: CourseMeta = {
   name: 'Sistem Operasi',
   code: 'CSCM602055',
   sks: 4,
-  accent: '#b3106c',
+  accent: '#5e121c',
   accentOn: '#ffffff',
+  pale: '#fbeeef',
+  cover: '',
   icon: '🖥️',
   dosen: 'Muhammad Mishbah, S.Kom., M.Kom.',
   sessions: [
@@ -92,8 +102,10 @@ const statprob: CourseMeta = {
   name: 'Statistika & Probabilitas',
   code: 'CSCM602013',
   sks: 3,
-  accent: '#7d5f00',
+  accent: '#8a5b07',
   accentOn: '#ffffff',
+  pale: '#fff6e0',
+  cover: '',
   icon: '📊',
   dosen: 'Rahmad Mahendra, Ph.D.',
   sessions: [
@@ -105,7 +117,8 @@ const statprob: CourseMeta = {
   desc: 'Menerapkan konsep probabilitas dan statistik untuk menginterpretasikan data: statistik deskriptif, teknik sampling, probabilitas dasar & bersyarat (Bayes), variabel acak, distribusi statistik sampel (CLT), estimasi parameter, uji hipotesis, dan aplikasi statistika dalam komputasi.',
 };
 
-export const META: CourseMeta[] = [pbp, sda, basdat, os, statprob];
+/* SDA dan PBP di depan: dua matkul yang nilainya sedang dikejar semester ini. */
+export const META: CourseMeta[] = [sda, pbp, basdat, os, statprob];
 
 export const metaById: Record<string, CourseMeta> = Object.fromEntries(META.map(c => [c.id, c]));
 

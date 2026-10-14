@@ -17,7 +17,20 @@ export interface Transaksi {
   /** Rupiah, selalu positif. Arahnya ditentukan `jenis`. */
   jumlah: number;
   catatan: string;
+  /** Nama toko / pengirim, terutama dari hasil scan struk. */
+  merchant?: string | null;
+  /** Path foto struk di bucket Supabase "struk". */
+  struk?: string | null;
+  sumber?: 'manual' | 'struk' | 'impor';
 }
+
+/** Batas belanja per bulan. 0 = tidak dibatasi. */
+export interface Anggaran {
+  bulanan: number;
+  kategori: Record<string, number>;
+}
+
+export const ANGGARAN_KOSONG: Anggaran = { bulanan: 0, kategori: {} };
 
 export interface Investasi {
   id: string;

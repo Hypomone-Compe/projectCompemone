@@ -1,14 +1,14 @@
 'use client';
 
 /* =========================================================================
-   Ekspor dan impor seluruh isi Sandbox.
+   Ekspor dan impor seluruh isi Hypomonē (berkas cadangan Sandbox lama juga diterima).
 
    Semua yang kamu tulis di situs ini (nilai, catatan Feynman, checklist
    mingguan, kebiasaan, jurnal, keuangan, catatan asdos) tinggal di
    localStorage peramban. Itu cepat dan privat, tapi juga berarti hilang
    kalau data situs dibersihkan, dan tidak ikut berpindah ke perangkat lain.
 
-   Sejak Sandbox bisa dipasang sebagai aplikasi, jalur ini jadi satu-satunya
+   Sejak aplikasi ini bisa dipasang sebagai aplikasi, jalur ini jadi satu-satunya
    cara memindahkan isi dari laptop ke ponsel: keduanya peramban berbeda,
    jadi penyimpanannya juga terpisah.
 
@@ -53,7 +53,7 @@ export default function Cadangan() {
       const url = URL.createObjectURL(new Blob([isi], { type: 'application/json' }));
       const a = document.createElement('a');
       a.href = url;
-      a.download = `sandbox-${todayYmd()}.json`;
+      a.download = `hypomone-${todayYmd()}.json`;
       a.click();
       URL.revokeObjectURL(url);
       setKabar({ nada: 'baik', teks: 'Berkas cadangan terunduh.' });
@@ -68,14 +68,14 @@ export default function Cadangan() {
       const data = JSON.parse(await berkas.text());
       const masuk = isiCadangan(data);
       if (!masuk.total && !data.harian && !data.progress) {
-        throw new Error('bukan cadangan Sandbox');
+        throw new Error('bukan cadangan Hypomonē');
       }
       setTinjau({ data, nama: berkas.name, masuk, sekarang: isiSekarang() });
     } catch {
       setTinjau(null);
       setKabar({
         nada: 'buruk',
-        teks: 'Berkas tidak terbaca. Pastikan itu berkas sandbox-YYYY-MM-DD.json hasil Unduh cadangan.',
+        teks: 'Berkas tidak terbaca. Pastikan itu berkas hypomone-YYYY-MM-DD.json (atau sandbox-….json lama) hasil Unduh cadangan.',
       });
     }
   }
@@ -166,7 +166,7 @@ export default function Cadangan() {
           )}
 
           <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--amber)' }}>
-            Mengimpor <b>menimpa</b> seluruh isi perangkat ini, tidak menggabung. Kolom kanan yang
+            Mengimpor <b>menimpa</b> seluruh isi akun (di semua perangkat), tidak menggabung. Kolom kanan yang
             lebih besar dari kolom kiri berarti ada yang akan hilang.
           </p>
 

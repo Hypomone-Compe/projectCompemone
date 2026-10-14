@@ -10,7 +10,7 @@ import {
   addPlanItem, getPlan, planSummary, removePlanItem,
   setPlanField, togglePlanItem, useStore,
 } from '@/lib/store';
-import { Bar, Chip, Drawer } from '@/components/ui';
+import { Bar, Chip, Drawer } from '@/components/kit';
 
 /* =============================== KOTAK =============================== */
 function WeekBox({ w, onOpen }: { w: SemesterWeek; onOpen: (w: SemesterWeek) => void }) {
@@ -56,7 +56,7 @@ function WeekBox({ w, onOpen }: { w: SemesterWeek; onOpen: (w: SemesterWeek) => 
                 ? `${w.taskCount} agenda`
                 : w.exam
                   ? 'Pekan ujian'
-                  : ', '}
+                  : '–'}
           </span>
           {sum.total > 0 && (
             <span className="num opacity-75">

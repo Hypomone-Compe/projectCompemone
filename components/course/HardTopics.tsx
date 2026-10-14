@@ -1,6 +1,6 @@
 'use client';
 
-import { Rich } from '@/components/ui';
+import { Rich } from '@/components/kit';
 import { getEntry, useStore } from '@/lib/store';
 import { parseFlag, stripEmoji } from '@/lib/text';
 import type { Topic } from '@/lib/types';

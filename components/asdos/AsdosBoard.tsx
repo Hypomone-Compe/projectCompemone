@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type FormEvent } from 'react';
-import { Bar, Reveal } from '@/components/ui';
+import { Bar, Reveal } from '@/components/kit';
 import { ISIAN, SERING_DITANYA, SILABUS, TUGAS_RUTIN } from '@/lib/asdos';
 import { fmtDateLong, todayYmd } from '@/lib/kalender';
 import {
@@ -270,7 +270,7 @@ export default function AsdosBoard() {
           </h2>
           <p className="lede mt-4">
             Semua kolom ini kosong karena situs ini tidak menebak isinya. Ketik sendiri begitu
-            silabus dan jadwal resminya keluar, lalu tersimpan di perangkat ini.
+            silabus dan jadwal resminya keluar, lalu tersinkron ke semua perangkatmu.
           </p>
           <div className="mt-8">
             <InfoKelas />

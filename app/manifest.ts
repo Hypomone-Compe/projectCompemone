@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 /* ==========================================================================
    Manifest PWA, disajikan Next.js di /manifest.webmanifest.
 
-   Dipasang supaya Sandbox bisa ditambahkan ke layar utama dan dibuka tanpa
+   Dipasang supaya Hypomonē bisa ditambahkan ke layar utama dan dibuka tanpa
    bilah alamat. Alasannya bukan kosmetik: isi halaman harian (kebiasaan,
    jurnal, sesi fokus) paling sering diisi sambil berdiri, di sela kelas, dari
    ponsel. Membuka peramban lalu mencari tab yang benar sudah cukup untuk
@@ -16,8 +16,8 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: 'Sandbox, monitoring Gasal 2026/2027',
-    short_name: 'Sandbox',
+    name: 'Hypomonē @GRIT',
+    short_name: 'Hypomonē',
     description:
       'Monitoring akademik dan harian: rubrik nilai lima mata kuliah, kebiasaan, jurnal, jam fokus, dan keuangan.',
     lang: 'id',
@@ -25,12 +25,9 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/',
     scope: '/',
     display: 'standalone',
-    /* Krem kertas untuk layar pemuatan, bukan tinta gelap: yang muncul sesaat
-       setelah ikon adalah badan halaman, dan badan halaman berlatar krem.
-       Memakai warna gelap di sini menghasilkan kedipan terang setiap kali
-       aplikasi dibuka. */
-    background_color: '#f3f0e7',
-    theme_color: '#12120f',
+    /* Putih, sama dengan badan halaman, supaya tidak ada kedipan saat dibuka. */
+    background_color: '#ffffff',
+    theme_color: '#ffffff',
     orientation: 'any',
     categories: ['education', 'productivity'],
     icons: [
@@ -53,6 +50,13 @@ export default function manifest(): MetadataRoute.Manifest {
         short_name: 'Keuangan',
         description: 'Catat pemasukan dan pengeluaran',
         url: '/keuangan',
+        icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
+      },
+      {
+        name: 'Scan struk',
+        short_name: 'Scan struk',
+        description: 'Foto struk, langsung jadi transaksi',
+        url: '/keuangan?scan=1',
         icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
       },
     ],

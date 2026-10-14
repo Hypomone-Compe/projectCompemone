@@ -89,7 +89,7 @@ export default function PWA() {
         paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))',
       }}
     >
-      <span className="text-[0.82rem]">Versi baru Sandbox sudah siap.</span>
+      <span className="text-[0.82rem]">Versi baru Hypomonē sudah siap.</span>
       <button onClick={() => menunggu.postMessage('ambil-alih')} className="btn btn--light btn--sm">
         Muat versi baru
       </button>

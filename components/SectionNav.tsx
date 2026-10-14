@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { gulirKe } from '@/lib/gulir';
+import { scrollKe } from '@/lib/scroll';
+import { cn } from '@/lib/utils';
 
 export interface NavSection {
   id: string;
@@ -10,13 +11,13 @@ export interface NavSection {
   title?: string;
 }
 
+/** Sub-navigasi seksi yang menempel di bawah navbar. Pill tab design system. */
 export default function SectionNav({ sections }: { sections: NavSection[] }) {
   const [active, setActive] = useState(sections[0]?.id);
 
   useEffect(() => {
     const els = sections.map(s => document.getElementById(s.id)).filter(Boolean) as HTMLElement[];
     if (!els.length || typeof IntersectionObserver === 'undefined') return;
-
     const io = new IntersectionObserver(
       entries => {
         const visible = entries
@@ -24,34 +25,34 @@ export default function SectionNav({ sections }: { sections: NavSection[] }) {
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
         if (visible) setActive(visible.target.id);
       },
-      { rootMargin: '-14% 0px -70% 0px', threshold: 0 },
+      { rootMargin: '-20% 0px -65% 0px', threshold: 0 },
     );
     els.forEach(el => io.observe(el));
     return () => io.disconnect();
   }, [sections]);
 
-  /* Tombol, bukan tautan jangkar: alamat di bilah URL tidak boleh kemasukan
-     "#seksi". Gulirnya tetap ikut peredam, bukan lompat mentah. */
   function lompat(id: string) {
     const el = document.getElementById(id);
     if (!el) return;
     setActive(id);
-    gulirKe(el, 118);
+    scrollKe(el, 150);
   }
 
   return (
-    <nav className="no-print sticky top-[var(--nav-h)] z-40 border-b border-[var(--rule)] bg-[color-mix(in_srgb,var(--paper)_90%,transparent)] backdrop-blur-md">
+    <nav aria-label="Bagian halaman" className="no-print sticky top-[76px] z-40 py-2 sm:top-[84px]">
       <div className="shell">
-        <div className="subnav">
+        <div className="flex gap-1 overflow-x-auto rounded-full border border-glass-border bg-glass-strong p-[5px] shadow-glass-soft backdrop-blur-glass [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:inline-flex">
           {sections.map(s => (
             <button
               key={s.id}
               type="button"
               onClick={() => lompat(s.id)}
               aria-current={active === s.id ? 'true' : undefined}
-              className={`opt ${active === s.id ? 'is-on' : ''}`}
+              className={cn(
+                'shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-all duration-base ease-out-expo',
+                active === s.id ? 'bg-navy text-white shadow-sm' : 'text-secondary hover:text-navy',
+              )}
             >
-              <span className="num opacity-60">{s.num}</span>
               {s.short}
             </button>
           ))}

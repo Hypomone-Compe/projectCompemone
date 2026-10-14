@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Rich } from '@/components/ui';
+import { Rich } from '@/components/kit';
 import { clearScores, compAverage, getComp, setSlot, setSlotCount, useStore } from '@/lib/store';
 import { letterFor, parseBestOf, parseFlag, parseFreqCount, stripEmoji } from '@/lib/text';
 import type { GradeComponent, Grading } from '@/lib/types';
@@ -58,7 +58,7 @@ function ComponentRow({ cid, comp, idx }: { cid: string; comp: GradeComponent; i
               min="0"
               max="100"
               step="0.5"
-              placeholder=", "
+              placeholder="–"
               value={v[i] ?? ''}
               onChange={e => setSlot(cid, idx, i, e.target.value, defaultN)}
               aria-label={`Nilai ${prefix} ${i + 1} untuk ${comp.name}`}
@@ -88,14 +88,14 @@ function ComponentRow({ cid, comp, idx }: { cid: string; comp: GradeComponent; i
         <div className="ml-auto pb-1 text-right">
           <div className="text-[0.62rem] uppercase tracking-[0.12em] muted">Rata-rata</div>
           <div className="display mt-0.5" style={{ fontSize: '1.6rem', fontVariantNumeric: 'tabular-nums' }}>
-            {avg == null ? ', ' : avg.toFixed(1)}
+            {avg == null ? '–' : avg.toFixed(1)}
           </div>
         </div>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.65rem] uppercase tracking-[0.1em]">
         <span className="muted">
-          {filled}/{n} terisi · BRP: {stripEmoji(comp.freq) || ', '}
+          {filled}/{n} terisi · BRP: {stripEmoji(comp.freq) || '–'}
         </span>
         {bestOf && <span className="c-text font-semibold">Dihitung dari {bestOf} nilai terbaik</span>}
       </div>
@@ -128,7 +128,7 @@ export default function GradeCalculator({ cid, grading }: { cid: string; grading
     return { wSum, sSum, norm, remaining, totalWeight, needA, need };
   }, [comps, cid, grading.scale, snap]);
 
-  const grade = calc.norm == null ? ', ' : letterFor(grading.scale, calc.norm);
+  const grade = calc.norm == null ? '–' : letterFor(grading.scale, calc.norm);
 
   return (
     <div className="mt-8">
@@ -145,7 +145,7 @@ export default function GradeCalculator({ cid, grading }: { cid: string; grading
                   className="display"
                   style={{ fontSize: 'clamp(3rem,7vw,4.6rem)', fontVariantNumeric: 'tabular-nums' }}
                 >
-                  {calc.norm == null ? ', ' : calc.norm.toFixed(1)}
+                  {calc.norm == null ? '–' : calc.norm.toFixed(1)}
                 </span>
                 <span
                   className="display c-bg rounded-[var(--radius)] px-3 py-1.5"
@@ -199,7 +199,7 @@ export default function GradeCalculator({ cid, grading }: { cid: string; grading
           </p>
 
           <p className="mt-6 border-t border-[var(--rule)] pt-4 text-xs leading-relaxed muted">
-            Tersimpan otomatis di browser ini. Total bobot BRP: {stripEmoji(grading.total)}.
+            Tersimpan otomatis dan tersinkron ke semua perangkat. Total bobot BRP: {stripEmoji(grading.total)}.
           </p>
         </div>
 

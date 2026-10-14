@@ -10,7 +10,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { LogoMark } from './Logo';
+import Image from 'next/image';
 import { fmtDateLong } from '@/lib/kalender';
 import { quoteForDate } from '@/lib/quotes';
 
@@ -27,7 +27,7 @@ export interface RingkasanSapaan {
   deadline: number;
 }
 
-const KUNCI_SESI = 'sandbox.sapaan';
+const KUNCI_SESI = 'hypomone.sapaan';
 
 /** Dipanggil dari header untuk memunculkan sapaan lagi. */
 export function bukaSapaan() {
@@ -84,7 +84,7 @@ export default function Sapaan({ ringkasan }: { ringkasan: RingkasanSapaan }) {
     <div
       className="fixed inset-0 z-[300] grid place-items-center overflow-y-auto p-[var(--gutter)]"
       style={{
-        background: 'color-mix(in srgb, var(--ink) 66%, transparent)',
+        background: 'rgba(11, 16, 45, 0.4)',
         backdropFilter: 'blur(6px)',
         animation: 'pudar .35s var(--ease) both',
       }}
@@ -95,38 +95,28 @@ export default function Sapaan({ ringkasan }: { ringkasan: RingkasanSapaan }) {
         aria-modal="true"
         aria-label="Sapaan pembuka"
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-[34rem] overflow-hidden rounded-[var(--radius-lg)] bg-[var(--paper)] text-[var(--ink)] shadow-[0_24px_70px_rgba(18,18,15,0.4)]"
+        className="w-full max-w-[34rem] overflow-hidden rounded-2xl bg-white text-navy shadow-xl"
         style={{ animation: 'naik .5s var(--ease) both' }}
       >
-        {/* kepala gelap */}
-        <div className="on-dark px-[clamp(1.3rem,3vw,2rem)] py-[clamp(1.3rem,3vw,1.9rem)]">
+        {/* kepala: mesh gradient design system */}
+        <div className="mesh-fallback relative px-[clamp(1.3rem,3vw,2rem)] py-[clamp(1.3rem,3vw,1.9rem)]">
           <div className="flex items-center justify-between gap-4">
-            <span className="brand" style={{ fontSize: '1.05rem' }}>
-              <LogoMark size={20} dot="var(--lime)" />
-              Sandbox
+            <span className="flex items-center gap-2.5 text-[17px] font-extrabold tracking-tight">
+              <Image src="/images/logo-bem-ui.png" alt="" width={876} height={876} className="size-9" />
+              Hypomonē <span className="text-accent">@GRIT</span>
             </span>
-            <span className="eyebrow eyebrow--plain">
+            <span className="rounded-full bg-white/80 px-3 py-1 text-[12.5px] font-bold text-navy shadow-xs">
               {fase === 'run'
-                ? `Minggu ${String(angka).padStart(2, '0')} / ${totalMinggu}`
+                ? `Minggu ${angka} / ${totalMinggu}`
                 : fase === 'pre'
                   ? `Mulai ${angka} hari lagi`
                   : 'Semester selesai'}
             </span>
           </div>
 
-          <p className="mt-6 text-[0.7rem] uppercase tracking-[0.16em]" style={{ color: 'var(--lime)' }}>
-            {fmtDateLong(today)}
-          </p>
-
-          <p className="display mt-3" style={{ fontSize: 'clamp(1.5rem,4.2vw,2.1rem)' }}>
-            {q.t}
-          </p>
-          <p
-            className="serif mt-2"
-            style={{ fontSize: 'clamp(1.4rem,4vw,2rem)', color: 'var(--lime)', display: 'block' }}
-          >
-            {q.s}
-          </p>
+          <p className="mt-6 text-xs font-bold uppercase tracking-[0.2em] text-accent-hover">{fmtDateLong(today)}</p>
+          <p className="mt-3 text-[clamp(1.4rem,4vw,1.9rem)] font-extrabold leading-tight tracking-tight">{q.t}</p>
+          <p className="mt-1 text-[clamp(1.2rem,3.4vw,1.6rem)] font-bold leading-tight text-accent">{q.s}</p>
         </div>
 
         {/* isi */}
@@ -134,7 +124,7 @@ export default function Sapaan({ ringkasan }: { ringkasan: RingkasanSapaan }) {
           {fase === 'run' ? (
             <>
               <span className="eyebrow eyebrow--plain">Minggu ini · {rentang}</span>
-              <p className="mt-3 text-[0.95rem] leading-relaxed">
+              <p className="mt-3 text-[0.95rem] leading-relaxed text-secondary">
                 {ujian
                   ? `Pekan ${ujian}. Fokusnya cuma satu: siap saat hari H.`
                   : deadline
@@ -151,8 +141,8 @@ export default function Sapaan({ ringkasan }: { ringkasan: RingkasanSapaan }) {
             <p className="text-[0.95rem] leading-relaxed">Semester sudah lewat. Selamat.</p>
           )}
 
-          <button onClick={tutup} className="btn btn--block mt-6">
-            Mulai
+          <button onClick={tutup} className="btn btn--accent btn--block mt-6">
+            Mulai hari ini
             <span className="btn__arrow">→</span>
           </button>
         </div>

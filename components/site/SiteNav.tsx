@@ -74,7 +74,7 @@ export default function SiteNav() {
               atTop ? 'sm:py-2' : 'sm:py-1',
             )}
           >
-            <Link href="/" className="flex min-w-0 items-center gap-2.5" aria-label="Hypomonē @GRIT, beranda">
+            <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Hypomonē @GRIT, beranda">
               <Image
                 src="/images/logo-bem-ui.png"
                 alt=""
@@ -83,7 +83,7 @@ export default function SiteNav() {
                 priority
                 className="size-9 shrink-0 transition-[width,height] duration-500 ease-out-expo group-data-[compact=true]/nav:size-8"
               />
-              <span className="truncate text-[17px] font-extrabold tracking-tight text-navy">
+              <span className="whitespace-nowrap text-[17px] font-extrabold tracking-tight text-navy">
                 Hypomonē <span className="font-bold text-accent">@GRIT</span>
               </span>
             </Link>
@@ -92,24 +92,6 @@ export default function SiteNav() {
 
             <div className="flex items-center gap-1.5">
               <SyncBadge />
-              <button
-                type="button"
-                onClick={bukaSapaan}
-                aria-label="Tampilkan sapaan hari ini"
-                title="Sapaan hari ini"
-                className="hidden size-[38px] items-center justify-center rounded-full text-secondary transition-colors hover:bg-navy-5 hover:text-navy sm:flex"
-              >
-                <Sparkles aria-hidden className="size-[18px]" />
-              </button>
-              {!localMode && (
-                <button
-                  type="button"
-                  onClick={keluar}
-                  className="hidden items-center gap-1.5 rounded-full px-3.5 py-2 text-[13.5px] font-bold text-secondary transition-colors hover:bg-navy-5 hover:text-navy lg:flex"
-                >
-                  <LogOut aria-hidden className="size-4" /> Keluar
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => setSheet('menu')}
@@ -132,8 +114,9 @@ export default function SiteNav() {
 }
 
 /* ----------------------------------------------------------- desktop */
+/* Tiga pintu saja: Mata kuliah, Keuangan, Lainnya. Logo = Beranda. */
 function DesktopLinks({ pathname, diMatkul }: { pathname: string; diMatkul: boolean }) {
-  const [buka, setBuka] = React.useState<null | 'matkul' | 'tautan'>(null);
+  const [buka, setBuka] = React.useState<null | 'matkul' | 'lain'>(null);
   const ref = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => setBuka(null), [pathname]);
@@ -149,47 +132,29 @@ function DesktopLinks({ pathname, diMatkul }: { pathname: string; diMatkul: bool
     };
   }, [buka]);
 
-  const link = (href: string, label: string) => (
-    <Link
-      key={href}
-      href={href}
-      aria-current={aktifDi(pathname, href) ? 'page' : undefined}
-      className={cn(
-        'relative py-1.5 transition-colors hover:text-navy',
-        aktifDi(pathname, href) && 'font-bold text-navy after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-navy',
-      )}
+  const garis = 'after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-navy';
+  const diLain = ['/', '/harian', '/asdos'].some(h => aktifDi(pathname, h));
+  const item = 'flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-secondary transition-colors hover:bg-navy-5 hover:text-navy';
+
+  const pemicu = (id: 'matkul' | 'lain', label: string, aktif: boolean) => (
+    <button
+      type="button"
+      onClick={() => setBuka(b => (b === id ? null : id))}
+      aria-expanded={buka === id}
+      className={cn('relative flex items-center gap-1 whitespace-nowrap py-1.5 transition-colors hover:text-navy', aktif && cn('font-bold text-navy', garis))}
     >
-      {label}
-    </Link>
+      {label} <ChevronDown aria-hidden className={cn('size-4 transition-transform', buka === id && 'rotate-180')} />
+    </button>
   );
 
   return (
-    <div
-      ref={ref}
-      className="relative hidden items-center gap-7 text-[15px] font-semibold text-secondary transition-[font-size] duration-500 lg:flex group-data-[compact=true]/nav:gap-6 group-data-[compact=true]/nav:text-[14px]"
-    >
-      {link('/', 'Beranda')}
-
+    <div ref={ref} className="relative hidden items-center gap-8 text-[15px] font-semibold text-secondary lg:flex">
       <div className="relative">
-        <button
-          type="button"
-          onClick={() => setBuka(b => (b === 'matkul' ? null : 'matkul'))}
-          aria-expanded={buka === 'matkul'}
-          className={cn(
-            'relative flex items-center gap-1 py-1.5 transition-colors hover:text-navy',
-            diMatkul && 'font-bold text-navy after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-navy',
-          )}
-        >
-          Mata kuliah <ChevronDown aria-hidden className={cn('size-4 transition-transform', buka === 'matkul' && 'rotate-180')} />
-        </button>
+        {pemicu('matkul', 'Mata kuliah', diMatkul)}
         {buka === 'matkul' && (
           <div className="absolute left-1/2 top-[calc(100%+14px)] w-[300px] -translate-x-1/2 rounded-xl border border-border bg-white p-2 shadow-lg">
             {META.map(c => (
-              <Link
-                key={c.id}
-                href={`/matkul/${c.id}`}
-                className="flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-navy-5"
-              >
+              <Link key={c.id} href={`/matkul/${c.id}`} className="flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-navy-5">
                 <span className="size-2.5 shrink-0 rounded-full" style={{ background: c.accent }} aria-hidden />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-2 text-sm font-bold text-navy">
@@ -204,34 +169,38 @@ function DesktopLinks({ pathname, diMatkul }: { pathname: string; diMatkul: bool
         )}
       </div>
 
-      {LINKS.slice(1).map(l => link(l.href, l.label))}
+      <Link
+        href="/keuangan"
+        aria-current={aktifDi(pathname, '/keuangan') ? 'page' : undefined}
+        className={cn('relative py-1.5 transition-colors hover:text-navy', aktifDi(pathname, '/keuangan') && cn('font-bold text-navy', garis))}
+      >
+        Keuangan
+      </Link>
 
       <div className="relative">
-        <button
-          type="button"
-          onClick={() => setBuka(b => (b === 'tautan' ? null : 'tautan'))}
-          aria-expanded={buka === 'tautan'}
-          className="flex items-center gap-1 py-1.5 transition-colors hover:text-navy"
-        >
-          Tautan <ChevronDown aria-hidden className={cn('size-4 transition-transform', buka === 'tautan' && 'rotate-180')} />
-        </button>
-        {buka === 'tautan' && (
+        {pemicu('lain', 'Lainnya', diLain)}
+        {buka === 'lain' && (
           <div className="absolute right-0 top-[calc(100%+14px)] w-[250px] rounded-xl border border-border bg-white p-2 shadow-lg">
+            <Link href="/" className={item}><Home aria-hidden className="size-4" /> Beranda</Link>
+            <Link href="/harian" className={item}><HeartPulse aria-hidden className="size-4" /> Harian</Link>
+            <Link href="/asdos" className={item}><BookOpen aria-hidden className="size-4" /> Asisten dosen</Link>
+            <div role="separator" className="mx-1 my-1.5 h-px bg-divider" />
             {TAUTAN_LUAR.map(t => (
-              <a
-                key={t.label}
-                href={t.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-navy-5"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-bold text-navy">{t.label}</span>
-                  <span className="block truncate text-[12.5px] font-medium text-muted">{t.ket}</span>
-                </span>
-                <ExternalLink aria-hidden className="size-4 text-faint" />
+              <a key={t.label} href={t.url} target="_blank" rel="noreferrer" className={item}>
+                <ExternalLink aria-hidden className="size-4" />
+                <span className="flex-1">{t.label}</span>
+                <span className="text-[11.5px] font-medium text-muted">{t.ket}</span>
               </a>
             ))}
+            <div role="separator" className="mx-1 my-1.5 h-px bg-divider" />
+            <button type="button" onClick={() => { setBuka(null); bukaSapaan(); }} className={item}>
+              <Sparkles aria-hidden className="size-4" /> Sapaan hari ini
+            </button>
+            {!localMode && (
+              <button type="button" onClick={keluar} className={cn(item, 'text-red hover:bg-red-pale hover:text-red')}>
+                <LogOut aria-hidden className="size-4" /> Keluar
+              </button>
+            )}
           </div>
         )}
       </div>

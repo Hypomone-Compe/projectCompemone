@@ -27,10 +27,13 @@ $$;
 
 -- Lapis terakhir: walau "Allow new users to sign up" lupa dimatikan, akun
 -- dengan email lain tetap tidak bisa dibuat sama sekali.
+-- Catatan: buat user pemilik DULU (Authentication → Users), baru jalankan bagian ini.
+-- Fungsi dibuat mandiri (email ditulis langsung, search_path kosong) supaya aman
+-- dipanggil dari sistem auth Supabase.
 create or replace function public.tolak_email_asing()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 begin
-  if lower(coalesce(new.email, '')) <> public.owner_email() then
+  if lower(coalesce(new.email, '')) <> 'lvnasandbox@gmail.com' then
     raise exception 'Pendaftaran ditutup. Hypomone hanya untuk satu akun.';
   end if;
   return new;
@@ -38,7 +41,7 @@ end $$;
 
 drop trigger if exists hypomone_satu_akun on auth.users;
 create trigger hypomone_satu_akun
-  before insert or update of email on auth.users
+  before insert on auth.users
   for each row execute function public.tolak_email_asing();
 
 -- 2. app_state ---------------------------------------------------------------

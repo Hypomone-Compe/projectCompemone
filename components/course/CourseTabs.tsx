@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { BookOpenCheck, Calculator, CalendarDays, Library, Target, LayoutDashboard, type LucideIcon } from 'lucide-react';
+import SideRail from '@/components/site/SideRail';
 import { cn } from '@/lib/utils';
 
 export const TABS: { id: string; label: string; Icon: LucideIcon }[] = [
@@ -48,7 +49,7 @@ export default function CourseTabs({ initial, panels }: { initial: string; panel
     /* Kalau tab-bar sudah menempel, kembalikan ke awal panel, bukan ke tengah panel lama. */
     const top = topRef.current;
     if (top && top.getBoundingClientRect().top < 0) {
-      window.scrollTo({ top: top.getBoundingClientRect().top + window.scrollY - 70, behavior: 'auto' });
+      window.scrollTo({ top: top.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
     }
   };
 
@@ -64,7 +65,8 @@ export default function CourseTabs({ initial, panels }: { initial: string; panel
   return (
     <>
       <div ref={topRef} />
-      <div className="no-print sticky top-[76px] z-30 py-2 sm:top-[84px]">
+      <SideRail label="Bagian mata kuliah" items={valid} active={tab} onPick={pilih} />
+      <div className="no-print py-2">
         <div className="shell">
           <div
             role="tablist"

@@ -27,24 +27,26 @@ export default function NotifyCard({ to, configured }: { to: string; configured:
   }
 
   return (
-    <div className="on-dark rounded-[var(--radius-lg)] px-[clamp(1.4rem,3vw,2.6rem)] py-[clamp(1.6rem,3vw,2.6rem)]">
-      <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+    <div className="on-dark relative overflow-hidden rounded-2xl px-[clamp(1.4rem,3vw,2.6rem)] py-[clamp(1.6rem,3vw,2.6rem)] shadow-lg">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(214,76,111,.35), transparent 70%)' }}
+      />
+      <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
-          <span className="eyebrow" style={{ color: 'var(--lime)' }}>
-            {configured ? 'Aktif' : 'Belum aktif'}
+          <span className="eyebrow" style={{ color: 'var(--pink-light)' }}>
+            Email harian · {configured ? 'aktif' : 'belum aktif'}
           </span>
 
-          <h3 className="display mt-4" style={{ fontSize: 'var(--t-lg)' }}>
-            Ringkasan mingguan mendarat di <span className="serif">kotak masukmu.</span>
+          <h3 className="mt-4 text-2xl font-extrabold tracking-tight sm:text-3xl">
+            Ringkasan harian, setiap pagi <span className="text-pink-light">pukul 06.00 WIB.</span>
           </h3>
 
-          <p className="lede mt-4 text-[0.95rem]">
-            Dikirim ke <b className="num" style={{ color: 'var(--paper)' }}>{to}</b> setiap{' '}
-            <b style={{ color: 'var(--lime)' }}>Senin</b>,{' '}
-            <b style={{ color: 'var(--lime)' }}>Rabu</b>, dan{' '}
-            <b style={{ color: 'var(--lime)' }}>Jumat pukul 06.00 WIB</b>. Isinya rundown hari itu,
-            pengingat kuis &amp; tutorial lab dua pekan ke depan, tugas &amp; deadline minggu
-            berjalan, bocoran minggu depan, dan jadwal kuliah tetap.
+          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-white/75">
+            Dikirim ke <b className="num text-white">{to}</b> <b className="text-pink-light">setiap hari</b>, termasuk
+            akhir pekan. Isinya jadwal kuliah hari itu, kuis &amp; lab dua pekan ke depan, deadline minggu berjalan,
+            checklist yang belum dicentang, bocoran minggu depan, dan ringkasan pengeluaran kemarin.
           </p>
 
           {!configured && (

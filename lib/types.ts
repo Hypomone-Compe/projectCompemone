@@ -113,6 +113,12 @@ export interface CourseMeta {
   accent: string;
   /** Warna teks ketika `accent` dipakai sebagai latar. */
   accentOn: string;
+  /** Latar pucat untuk chip & sorotan. */
+  pale: string;
+  /** Matkul yang nilainya sedang dikejar; ditaruh paling depan & diberi tanda. */
+  fokus?: boolean;
+  /** Gambar kartu orbit (rasio 1.4:1.9) di /public. Kosong = kartu digambar otomatis dengan logo BEM. */
+  cover?: string;
   icon: string;
   dosen: string;
   sessions: Session[];

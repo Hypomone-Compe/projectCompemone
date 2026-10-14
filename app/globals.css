@@ -1,0 +1,1003 @@
+@import 'tailwindcss';
+
+/* =========================================================================
+   Monitoring Semester, Design Tokens
+   Bahasa visual: editorial-brutalist, mewarisi sistem MBGMeter.
+   - Struktur & tipografi raksasa  ......... k95.it
+   - Grid rapi, banyak ruang kosong ........ produx.design
+   - Blok warna datar sebagai poster ....... studiofeixen.ch
+   - Judul serif untuk kartu bacaan ........ wellcomecollection.org/stories
+   ========================================================================= */
+
+:root {
+  /* --- Warna dasar --------------------------------------------------- */
+  --ink: #12120f; /* hitam hangat */
+  --ink-soft: #2a2a24;
+  --ink-mute: #66665c; /* cukup pekat agar teks kecil tetap ≥4,5:1 di atas kertas */
+  --paper: #f3f0e7; /* putih gading */
+  --paper-2: #e8e3d5;
+  --paper-3: #dcd6c4;
+  --white: #ffffff;
+
+  /* --- Aksen: blok warna datar, bukan gradien ------------------------ */
+  --lime: #c9f24d; /* sorotan di atas blok gelap */
+  --green: #12683f;
+  --amber: #f2a93b;
+  --red: #d62b1c;
+  --blue: #2b46f0;
+  --clay: #c0431f;
+  --magenta: #b3106c;
+  --gold: #7d5f00;
+  --cream: #fff3d6;
+
+  /* --- Peran semantik ------------------------------------------------ */
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --rule: color-mix(in srgb, var(--ink) 16%, transparent);
+  --rule-strong: color-mix(in srgb, var(--ink) 32%, transparent);
+
+  /* Aksen aktif. Ditimpa per matkul lewat style={{ '--c': ... }}. */
+  --c: var(--ink);
+  --c-on: var(--paper);
+
+  /* --- Tipografi: tiga peran, tidak lebih ---------------------------- */
+  --font-display: 'Bricolage Grotesque', 'Poppins', system-ui, sans-serif;
+  --font-body: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+
+  --t-mega: clamp(3.2rem, 12.5vw, 12rem);
+  --t-xxl: clamp(2.4rem, 7vw, 6rem);
+  --t-xl: clamp(1.9rem, 4.4vw, 3.4rem);
+  --t-lg: clamp(1.45rem, 2.6vw, 2.1rem);
+  --t-md: clamp(1.05rem, 1.35vw, 1.25rem);
+  --t-base: 1rem;
+  --t-sm: 0.875rem;
+  --t-xs: 0.75rem;
+  --t-micro: 0.6875rem;
+
+  /* --- Ritme & bentuk ------------------------------------------------ */
+  --gutter: clamp(1.15rem, 4vw, 3.5rem);
+  --stack: clamp(3.5rem, 8vw, 7rem);
+  --radius: 2px; /* nyaris kotak: bahasa cetak, bukan bahasa aplikasi */
+  --radius-lg: 4px;
+  --radius-pill: 999px;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1);
+  --dur: 0.55s;
+  --dur-fast: 0.25s;
+
+  --maxw: 1560px;
+  --nav-h: 66px;
+
+  color-scheme: light;
+}
+
+/* Blok bertema gelap - hero, seksi selingan, footer. */
+.on-dark {
+  --bg: var(--ink);
+  --fg: var(--paper);
+  --rule: color-mix(in srgb, var(--paper) 18%, transparent);
+  --rule-strong: color-mix(in srgb, var(--paper) 38%, transparent);
+  --ink-mute: #93938a;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* Kebalikan .on-dark: mengembalikan token terang di dalam blok gelap, dipakai
+   untuk kartu kertas yang mengapung di atas kanvas hitam (mis. panel masuk). */
+.on-light {
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --rule: color-mix(in srgb, var(--ink) 16%, transparent);
+  --rule-strong: color-mix(in srgb, var(--ink) 32%, transparent);
+  --ink-mute: #66665c;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* Blok poster warna datar. */
+.on-color {
+  --rule: color-mix(in srgb, var(--ink) 26%, transparent);
+  --rule-strong: color-mix(in srgb, var(--ink) 55%, transparent);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur: 0.001s;
+    --dur-fast: 0.001s;
+  }
+}
+
+/* =========================================================================
+   Dasar
+   ========================================================================= */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* Penghalusan gulir ditangani lib/gulir.ts, bukan CSS. Kalau keduanya
+       aktif bersamaan, tiap frame dari peredam ikut dihaluskan lagi dan
+       hasilnya justru tersendat. */
+    scroll-behavior: auto;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: var(--t-base);
+    line-height: 1.5;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  button { cursor: pointer; }
+  a { color: inherit; text-decoration: none; }
+
+  ::selection { background: var(--lime); color: var(--ink); }
+
+  :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+  .on-dark :focus-visible { outline-color: var(--lime); }
+
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-track { background: var(--paper-2); }
+  ::-webkit-scrollbar-thumb { background: var(--paper-3); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-mute); }
+}
+
+/* =========================================================================
+   Tipografi
+   ========================================================================= */
+@layer components {
+  .display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 0.86;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+  }
+
+  /* Serif miring di tengah judul sans raksasa - tanda tangan sistem ini. */
+  .serif {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-style: italic;
+    letter-spacing: -0.015em;
+    line-height: 1.14;
+  }
+
+  .serif-up {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-style: normal;
+    letter-spacing: -0.01em;
+    line-height: 1.14;
+  }
+
+  /* Penanda seksi kecil dengan titik di depan (k95). */
+  .eyebrow {
+    font-family: var(--font-body);
+    font-size: var(--t-micro);
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+
+  .eyebrow::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    background: currentColor;
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .eyebrow--c::before { background: var(--c); }
+  .eyebrow--plain::before { display: none; }
+
+  .lede {
+    font-size: var(--t-md);
+    line-height: 1.6;
+    max-width: 62ch;
+    color: color-mix(in srgb, var(--fg) 78%, transparent);
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .meta {
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Kutipan editorial. */
+  .kutipan {
+    font-family: var(--font-serif);
+    font-size: clamp(1.35rem, 2.6vw, 2rem);
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    border-left: 3px solid var(--c);
+    padding-left: clamp(1rem, 2vw, 1.6rem);
+    display: block;
+  }
+
+  .kutipan__sumber {
+    display: block;
+    margin-top: 1rem;
+    font-family: var(--font-body);
+    font-style: normal;
+    font-size: var(--t-micro);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+
+  /* =======================================================================
+     Layout
+     ======================================================================= */
+  .shell {
+    width: 100%;
+    max-width: var(--maxw);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .section {
+    padding-block: var(--stack);
+    position: relative;
+  }
+
+  .section--tight { padding-block: clamp(2.2rem, 4.5vw, 4rem); }
+
+  .rule { height: 1px; background: var(--rule); border: 0; width: 100%; }
+
+  .hairline-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    max-width: var(--maxw);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    z-index: 0;
+  }
+
+  .hairline-grid span { border-left: 1px solid var(--rule); opacity: 0.55; }
+  .hairline-grid span:last-child { border-right: 1px solid var(--rule); }
+
+  @media (max-width: 900px) {
+    .hairline-grid { display: none; }
+  }
+
+  /* =======================================================================
+     Navigasi
+     ======================================================================= */
+  .nav {
+    --nav-bg: rgba(243, 240, 231, 0.88);
+    --nav-rule: rgba(18, 18, 15, 0.16);
+    --nav-link: rgba(18, 18, 15, 0.66);
+    --nav-link-kuat: #12120f;
+    --nav-hover: rgba(18, 18, 15, 0.07);
+
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    min-height: var(--nav-h);
+    display: flex;
+    align-items: center;
+    background: var(--nav-bg);
+    backdrop-filter: saturate(1.4) blur(14px);
+    border-bottom: 1px solid var(--nav-rule);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    font-size: 1.22rem;
+    flex: none;
+  }
+
+  .nav__link {
+    font-size: var(--t-xs);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.72rem;
+    border-radius: var(--radius-pill);
+    color: var(--nav-link);
+    transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+    white-space: nowrap;
+  }
+
+  .nav__link:hover { color: var(--nav-link-kuat); background: var(--nav-hover); }
+
+  .nav__link.is-active {
+    color: var(--c-on);
+    background: var(--c);
+  }
+
+  /* =======================================================================
+     Tombol
+     ======================================================================= */
+  .btn {
+    --btn-bg: var(--ink);
+    --btn-fg: var(--paper);
+    --btn-sweep: var(--lime);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    padding: 0.9rem 1.45rem;
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+    border-radius: var(--radius-pill);
+    font-size: var(--t-xs);
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    overflow: hidden;
+    isolation: isolate;
+    transition: transform var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease),
+      color var(--dur-fast) var(--ease);
+  }
+
+  /* Sapuan warna naik dari bawah saat hover (k95). */
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--btn-sweep);
+    transform: translateY(101%);
+    transition: transform var(--dur) var(--ease);
+    z-index: -1;
+  }
+
+  .btn:hover::after { transform: none; }
+  .btn:hover { color: var(--ink); }
+  .btn:active { transform: scale(0.975); }
+  .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn:disabled::after { display: none; }
+
+  .btn--ghost {
+    --btn-bg: transparent;
+    --btn-fg: var(--fg);
+    border: 1px solid var(--rule-strong);
+  }
+
+  .btn--light { --btn-bg: var(--paper); --btn-fg: var(--ink); }
+
+  .btn--c {
+    --btn-bg: var(--c);
+    --btn-fg: var(--c-on);
+    --btn-sweep: var(--ink);
+  }
+  .btn--c:hover { color: var(--paper); }
+
+  .btn--sm { padding: 0.55rem 0.95rem; font-size: var(--t-micro); }
+  .btn--block { width: 100%; }
+
+  .btn__arrow { transition: transform var(--dur) var(--ease); }
+  .btn:hover .btn__arrow { transform: translateX(4px); }
+
+  /* =======================================================================
+     Chip & titik
+     ======================================================================= */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.32rem 0.68rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-pill);
+    font-size: var(--t-micro);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1.35;
+  }
+
+  .chip--solid { background: var(--fg); color: var(--bg); border-color: transparent; }
+  .chip--c { background: var(--c); color: var(--c-on); border-color: transparent; }
+  .chip--lime { background: var(--lime); color: var(--ink); border-color: transparent; }
+  .chip--red { background: var(--red); color: var(--white); border-color: transparent; }
+  .chip--amber { background: var(--amber); color: var(--ink); border-color: transparent; }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: currentColor; }
+
+  .dot--pulse { position: relative; }
+  .dot--pulse::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    animation: pulse 1.9s var(--ease) infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(0.6); opacity: 1; }
+    100% { transform: scale(1.9); opacity: 0; }
+  }
+
+  /* =======================================================================
+     Kartu & statistik
+     Aturan tetap: permukaan yang menentukan latarnya sendiri WAJIB
+     menentukan warna teksnya sendiri.
+     ======================================================================= */
+  .card {
+    background: var(--white);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    padding: clamp(1.15rem, 2vw, 1.8rem);
+  }
+
+  .on-dark .card {
+    background: color-mix(in srgb, var(--paper) 6%, transparent);
+    color: var(--fg);
+    border-color: var(--rule);
+  }
+
+  .card--flush { padding: 0; overflow: hidden; }
+
+  .card__title {
+    font-family: var(--font-display);
+    font-size: var(--t-md);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .stat {
+    border-top: 2px solid var(--fg);
+    padding-top: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .stat--c { border-top-color: var(--c); }
+  .stat--lime { border-top-color: var(--lime); }
+  .stat--red { border-top-color: var(--red); }
+  .stat--amber { border-top-color: var(--amber); }
+  .stat--blue { border-top-color: var(--blue); }
+
+  .stat__value {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.2rem, 4.4vw, 3.6rem);
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: baseline;
+    gap: 0.12em;
+  }
+
+  .stat__unit { font-size: 0.42em; font-weight: 500; letter-spacing: -0.01em; }
+
+  .stat__label {
+    font-size: var(--t-micro);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    line-height: 1.4;
+  }
+
+  .stat__note {
+    font-size: var(--t-sm);
+    color: color-mix(in srgb, var(--fg) 68%, transparent);
+    line-height: 1.5;
+  }
+
+  /* =======================================================================
+     Baris indeks bernomor (k95.it)
+     ======================================================================= */
+  .index { border-top: 1px solid var(--rule); }
+
+  .index__row {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1.25rem;
+    width: 100%;
+    text-align: left;
+    padding: clamp(1.1rem, 2.2vw, 1.9rem) 0.4rem;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+    isolation: isolate;
+    transition: padding-inline var(--dur) var(--ease), color var(--dur-fast) var(--ease);
+  }
+
+  .index__row::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--c);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform var(--dur) var(--ease);
+    z-index: -1;
+  }
+
+  .index__row:hover::before,
+  .index__row[aria-expanded='true']::before { transform: none; }
+
+  .index__row:hover,
+  .index__row[aria-expanded='true'] {
+    color: var(--c-on);
+    padding-inline: 1.25rem;
+  }
+
+  .index__num { font-size: var(--t-xs); opacity: 0.62; }
+
+  .index__title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.3rem, 3.1vw, 2.4rem);
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+  }
+
+  .index__meta { font-size: var(--t-xs); text-align: right; opacity: 0.72; white-space: nowrap; }
+
+  @media (max-width: 700px) {
+    .index__row { grid-template-columns: 2.4rem minmax(0, 1fr); gap: 0.8rem; }
+    .index__meta { grid-column: 2; text-align: left; }
+  }
+
+  /* =======================================================================
+     Marquee
+     ======================================================================= */
+  .marquee {
+    display: flex;
+    overflow: hidden;
+    user-select: none;
+    border-block: 1px solid var(--rule);
+    padding-block: 0.85rem;
+    background: var(--bg);
+  }
+
+  .marquee__track {
+    display: flex;
+    flex: none;
+    gap: 2.5rem;
+    padding-right: 2.5rem;
+    min-width: max-content;
+    animation: slide var(--marquee-dur, 46s) linear infinite;
+  }
+
+  .marquee:hover .marquee__track { animation-play-state: paused; }
+
+  .marquee__item {
+    font-size: var(--t-xs);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    white-space: nowrap;
+  }
+
+  .marquee__item::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--lime);
+    border-radius: 50%;
+    flex: none;
+  }
+
+  @keyframes slide { to { transform: translateX(-100%); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee__track { animation: none; }
+  }
+
+  /* =======================================================================
+     Poster (Studio Feixen), dipakai untuk kotak minggu
+     ======================================================================= */
+  .poster {
+    position: relative;
+    border-radius: var(--radius-lg);
+    padding: clamp(1.4rem, 3vw, 2.4rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    overflow: hidden;
+    isolation: isolate;
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .poster:hover { transform: translateY(-5px); }
+
+  .poster__deco { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+
+  .poster__title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.6rem, 3.2vw, 2.7rem);
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+  }
+
+  .poster__foot {
+    font-size: var(--t-micro);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 1px solid var(--rule-strong);
+    padding-top: 0.8rem;
+  }
+
+  /* =======================================================================
+     Kotak minggu
+     ======================================================================= */
+  .week {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    background: var(--white);
+    color: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    padding: 0.9rem 0.95rem 0.85rem;
+    min-height: 9.5rem;
+    isolation: isolate;
+    overflow: hidden;
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+      border-color var(--dur-fast) var(--ease);
+  }
+
+  .week::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--ink);
+    transform: translateY(101%);
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .week:hover { color: var(--paper); border-color: var(--ink); transform: translateY(-4px); }
+  .week:hover::before { transform: none; }
+  .week:hover .week__num { color: var(--lime); }
+
+  .week__num {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.9rem;
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+    transition: color var(--dur-fast) var(--ease);
+  }
+
+  .week__range { font-size: var(--t-micro); letter-spacing: 0.05em; opacity: 0.62; margin-top: 0.35rem; }
+
+  .week__tags { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 0.5rem; }
+  .week__tag { height: 4px; width: 20px; border-radius: 2px; }
+
+  .week__foot {
+    font-size: var(--t-micro);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  /* Minggu berjalan: dibalik jadi blok gelap dengan sorotan lime. */
+  .week--now {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .week--now .week__num { color: var(--lime); }
+  .week--now::before { background: var(--lime); }
+  .week--now:hover { color: var(--ink); }
+  .week--now:hover .week__num { color: var(--ink); }
+
+  /* Pekan ujian: poster merah. */
+  .week--exam {
+    background: var(--red);
+    color: var(--white);
+    border-color: transparent;
+  }
+  .week--exam::before { background: var(--ink); }
+  .week--exam:hover { color: var(--white); }
+  .week--exam:hover .week__num { color: var(--lime); }
+
+  .week--past { background: var(--paper-2); color: var(--ink-mute); }
+
+  /* Baris rencana mingguan. Statusnya dipasang di klien lewat
+     data-week-state supaya halaman matkul tetap bisa di-prerender. */
+  .minggu__kini { display: none; }
+  .minggu[data-week-state='past'] { opacity: 0.55; }
+  .minggu[data-week-state='now'] {
+    background: color-mix(in srgb, var(--c) 9%, transparent);
+    margin-inline: -0.75rem;
+    padding-inline: 0.75rem;
+  }
+  .minggu[data-week-state='now'] .minggu__kini { display: inline-flex; }
+  .minggu[data-week-state='now'] .minggu__label { color: var(--c); }
+
+  /* =======================================================================
+     Mode aplikasi terpasang
+
+     Saat dibuka dari layar utama tidak ada bilah alamat peramban yang
+     menahan isi halaman dari poni dan sudut layar, jadi jarak amannya harus
+     dipasang sendiri. Hanya berlaku di display-mode: standalone supaya di
+     dalam tab peramban biasa tidak ada ruang kosong yang tidak perlu.
+     ======================================================================= */
+  @media (display-mode: standalone) {
+    .nav { padding-top: env(safe-area-inset-top); }
+    body { padding-bottom: env(safe-area-inset-bottom); }
+    .shell { padding-inline: max(var(--gutter), env(safe-area-inset-left)); }
+  }
+
+  /* =======================================================================
+     Formulir
+     ======================================================================= */
+  .field__label {
+    display: block;
+    font-size: var(--t-micro);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 0.45rem;
+  }
+
+  .input,
+  .textarea,
+  .tumbuh::after {
+    width: 100%;
+    padding: 0.8rem 0.95rem;
+    background: var(--white);
+    color: var(--ink);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius);
+    font-size: var(--t-base);
+    font-family: inherit;
+    transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  }
+
+  .on-dark .input,
+  .on-dark .textarea {
+    background: color-mix(in srgb, var(--paper) 8%, transparent);
+    color: var(--fg);
+  }
+
+  .on-light .input,
+  .on-light .textarea {
+    background: var(--white);
+    color: var(--ink);
+  }
+
+  .input::placeholder,
+  .textarea::placeholder { color: var(--ink-mute); }
+
+  .input:focus,
+  .textarea:focus {
+    outline: none;
+    border-color: var(--c);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 16%, transparent);
+  }
+
+  .textarea { min-height: 118px; resize: vertical; line-height: 1.6; }
+
+  /* Textarea yang tinggi sendirinya mengikuti isi.
+
+     Tingginya datang dari salinan teks di ::after yang menempati sel grid yang
+     sama, bukan dari JavaScript yang membaca scrollHeight. Cara JS memaksa
+     reflow seluruh dokumen tiap ketikan, dan halaman harian ini panjang;
+     cara ini nol biaya dan tetap jalan saat tab tidak sedang melukis.
+
+     Syaratnya salinan dan textarea harus sama persis kotaknya, itu sebabnya
+     `.tumbuh::after` ikut di aturan .input/.textarea di atas. */
+  .tumbuh { display: grid; }
+
+  .tumbuh::after {
+    content: attr(data-isi) ' ';
+    visibility: hidden;
+    border-color: transparent;
+  }
+
+  .tumbuh > .textarea,
+  .tumbuh::after {
+    grid-area: 1 / 1 / 2 / 2;
+    font-size: 0.95rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow: hidden;
+    resize: none;
+  }
+
+  /* Kotak nilai kecil di kalkulator. */
+  .score {
+    width: 4.4rem;
+    padding: 0.5rem 0.35rem;
+    text-align: center;
+    background: var(--white);
+    color: var(--ink);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-size: var(--t-sm);
+    transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+  }
+
+  .score:focus {
+    outline: none;
+    border-color: var(--c);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 16%, transparent);
+  }
+
+  .score--filled { border-color: var(--c); background: color-mix(in srgb, var(--c) 8%, var(--white)); }
+
+  .stepper {
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 2.2rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    line-height: 1;
+    transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+  }
+
+  .stepper:hover:not(:disabled) { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .stepper:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* Tombol pilihan (status pemahaman, filter). */
+  .opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-pill);
+    font-size: var(--t-micro);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--fg);
+    white-space: nowrap;
+    transition: all var(--dur-fast) var(--ease);
+  }
+
+  .opt:hover { border-color: var(--fg); }
+  .opt.is-on { background: var(--c); color: var(--c-on); border-color: var(--c); }
+
+  .subnav {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding-block: 0.55rem;
+    scrollbar-width: none;
+  }
+
+  .subnav::-webkit-scrollbar { display: none; }
+
+  /* =======================================================================
+     Bilah & tabel
+     ======================================================================= */
+  .bar__track {
+    height: 8px;
+    background: color-mix(in srgb, var(--fg) 10%, transparent);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+  }
+
+  .bar__fill {
+    height: 100%;
+    background: var(--c);
+    border-radius: inherit;
+    transition: width var(--dur) var(--ease);
+  }
+
+  .alert {
+    display: flex;
+    gap: 1rem;
+    padding: 1.05rem 1.2rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--rule-strong);
+    align-items: flex-start;
+  }
+
+  .alert--red { background: var(--red); color: var(--white); border-color: transparent; }
+  .alert--amber { background: var(--amber); color: var(--ink); border-color: transparent; }
+  .alert--lime { background: var(--lime); color: var(--ink); border-color: transparent; }
+  .alert--ink { background: var(--ink); color: var(--paper); border-color: transparent; }
+
+  .empty {
+    padding: clamp(2rem, 5vw, 3.5rem);
+    text-align: center;
+    border: 1px dashed var(--rule-strong);
+    border-radius: var(--radius-lg);
+    display: grid;
+    gap: 0.6rem;
+    justify-items: center;
+  }
+
+  /* Akordeon. */
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  details[open] > summary .chev { transform: rotate(45deg); }
+  .chev { transition: transform var(--dur-fast) var(--ease); display: inline-block; }
+
+  /* Teks kaya dari data BRP. */
+  .rich b, .rich strong { font-weight: 600; color: var(--fg); }
+  .rich i, .rich em { font-style: italic; }
+  .rich code {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.85em;
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+    padding: 0.1em 0.35em;
+    border-radius: 2px;
+  }
+}
+
+/* =========================================================================
+   Animasi masuk saat digulir
+   ========================================================================= */
+@layer utilities {
+  .reveal {
+    --reveal-delay: 0ms;
+    opacity: 0;
+    transform: translateY(26px);
+    transition:
+      opacity 0.8s var(--ease) var(--reveal-delay),
+      transform 0.8s var(--ease) var(--reveal-delay);
+  }
+
+  .reveal.is-in { opacity: 1; transform: none; }
+
+  /* Baris teks tersingkap dari balik topeng (k95). */
+  .mask { display: block; overflow: hidden; }
+  .mask > span {
+    display: block;
+    transform: translateY(105%);
+    transition: transform 1s var(--ease) var(--reveal-delay);
+  }
+  .mask.is-in > span { transform: none; }
+
+  .muted { color: var(--ink-mute); }
+  .c-text { color: var(--c); }
+  .c-bg { background: var(--c); color: var(--c-on); }
+  .c-border { border-color: var(--c); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .mask > span { opacity: 1 !important; transform: none !important; }
+  }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+}

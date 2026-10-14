@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+next-env.d.ts
+
+# Kredensial: JANGAN pernah di-commit. Nilainya di-set di Vercel.
+.env
+.env*.local
+
+.vercel
+*.tsbuildinfo
+*.log
+.DS_Store
+Thumbs.db

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface RailItem {
@@ -8,30 +9,45 @@ export interface RailItem {
 }
 
 /**
- * Penanda seksi yang menempel di tepi kiri layar (desktop). Pengganti bilah
- * kedua di bawah navbar: hanya garis-garis kecil, label seksi aktif terlihat,
- * label lain muncul saat rel disorot. Klik untuk lompat.
+ * Penanda seksi di tepi kiri layar (desktop). Saat diam hanya garis kecil
+ * (garis pink panjang = seksi aktif) supaya tidak menutupi isi halaman.
+ * Label muncul saat disorot/difokus, dan langsung menutup lagi setelah diklik.
  */
 export default function SideRail({ items, active, onPick, label }: { items: RailItem[]; active: string; onPick: (id: string) => void; label: string }) {
+  const [buka, setBuka] = useState(false);
+
   return (
-    <nav aria-label={label} className="group/rail no-print fixed left-3 top-1/2 z-30 hidden -translate-y-1/2 flex-col gap-1.5 lg:flex">
+    <nav
+      aria-label={label}
+      onMouseEnter={() => setBuka(true)}
+      onMouseLeave={() => setBuka(false)}
+      onFocus={() => setBuka(true)}
+      onBlur={e => !e.currentTarget.contains(e.relatedTarget as Node) && setBuka(false)}
+      className="no-print fixed left-0 top-1/2 z-30 hidden -translate-y-1/2 flex-col gap-1.5 py-3 pl-3 pr-4 lg:flex"
+    >
       {items.map(it => {
         const on = it.id === active;
         return (
           <button
             key={it.id}
             type="button"
-            onClick={() => onPick(it.id)}
+            onClick={e => {
+              onPick(it.id);
+              setBuka(false);
+              e.currentTarget.blur();
+            }}
             aria-current={on ? 'true' : undefined}
+            aria-label={it.label}
+            title={it.label}
             className="flex items-center gap-2.5 py-1 text-left"
           >
-            <span className={cn('h-[3px] rounded-full transition-all duration-base ease-out-expo', on ? 'w-7 bg-accent' : 'w-3.5 bg-navy-30 group-hover/rail:bg-navy-50')} />
+            <span className={cn('h-[3px] rounded-full transition-all duration-base ease-out-expo', on ? 'w-7 bg-accent' : 'w-3.5 bg-navy-30')} />
             <span
+              aria-hidden
               className={cn(
-                'whitespace-nowrap rounded-full px-2.5 py-1 text-[12.5px] font-bold transition-all duration-base ease-out-expo',
-                on
-                  ? 'border border-glass-border bg-glass-strong text-navy shadow-glass-soft backdrop-blur-glass'
-                  : 'pointer-events-none -translate-x-1 text-secondary opacity-0 group-hover/rail:pointer-events-auto group-hover/rail:translate-x-0 group-hover/rail:opacity-100 hover:text-navy',
+                'whitespace-nowrap rounded-full border border-glass-border bg-glass-strong px-2.5 py-1 text-[12.5px] font-bold shadow-glass-soft backdrop-blur-glass transition-all duration-base ease-out-expo',
+                on ? 'text-navy' : 'text-secondary hover:text-navy',
+                buka ? 'translate-x-0 opacity-100' : 'pointer-events-none -translate-x-1 opacity-0',
               )}
             >
               {it.label}

@@ -1,3 +1,4 @@
+import MaskotMengambang from '@/components/maskot/MaskotMengambang';
 import Sapaan, { type RingkasanSapaan } from '@/components/Sapaan';
 import { Cursor } from '@/components/site/Cursor';
 import SiteFooter from '@/components/site/SiteFooter';
@@ -37,6 +38,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <SiteFooter />
+      <MaskotMengambang />
       <Cursor />
     </div>
   );

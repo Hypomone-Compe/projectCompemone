@@ -62,6 +62,7 @@ const basdat: CourseMeta = {
   accent: '#2fae74',
   accentOn: '#ffffff',
   pale: 'rgba(47, 174, 116, 0.15)',
+  fokus: true,
   cover: '',
   icon: '🗄️',
   dosen: 'Ilma Alpha Mannix, M.Kom.',
@@ -117,7 +118,7 @@ const statprob: CourseMeta = {
   desc: 'Menerapkan konsep probabilitas dan statistik untuk menginterpretasikan data: statistik deskriptif, teknik sampling, probabilitas dasar & bersyarat (Bayes), variabel acak, distribusi statistik sampel (CLT), estimasi parameter, uji hipotesis, dan aplikasi statistika dalam komputasi.',
 };
 
-/* SDA dan PBP di depan: dua matkul yang nilainya sedang dikejar semester ini. */
+/* SDA, PBP, dan Basdat di depan: tiga matkul yang nilainya sedang dikejar semester ini. */
 export const META: CourseMeta[] = [sda, pbp, basdat, os, statprob];
 
 export const metaById: Record<string, CourseMeta> = Object.fromEntries(META.map(c => [c.id, c]));

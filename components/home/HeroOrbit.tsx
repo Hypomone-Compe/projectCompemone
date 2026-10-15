@@ -17,7 +17,7 @@ const loadDetail = () => import('./CourseDetail');
 const CourseDetail = dynamic(() => loadDetail().then(m => m.default), { ssr: false });
 
 /* 4 baris × 4 kartu = 16 slot untuk 13 item: tiap item tampil sekali,
-   hanya SDA, PBP, dan Keuangan yang muncul dua kali. */
+   hanya SDA, PBP, dan Basdat yang muncul dua kali. */
 const HERO = {
   rings: 4,
   cardsPerRing: 4,

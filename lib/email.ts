@@ -334,7 +334,7 @@ function hariIniBlock(hari: string, sesi: Sesi[]) {
   if (!sesi.length) {
     return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${LIME};border-radius:12px;">
     <tr><td style="padding:15px 18px;font:400 13px/1.6 ${SANS};color:${INK};">
-      <b>${esc(hari)}: tidak ada kelas.</b> Satu sesi fokus 50 menit untuk SDA atau PBP sudah cukup berarti hari ini.
+      <b>${esc(hari)}: tidak ada kelas.</b> Satu sesi fokus 50 menit untuk SDA, PBP, atau Basdat sudah cukup berarti hari ini.
     </td></tr></table>`;
   }
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${LIME};border-radius:12px;">
@@ -389,7 +389,7 @@ function pribadiBlock(p: DataPribadi) {
   const kotak = (judul: string, isi: string) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;background:${WHITE};border:1px solid ${RULE};border-radius:12px;">
     <tr><td style="padding:15px 18px;">${eyebrow(judul, PINK)}${isi}</td></tr></table>`;
 
-  return kotak(`Checklist minggu ini · ${p.checklist.length} belum`, checklist) + kotak('Uang', uang) + (prio ? kotak('Prioritas: SDA & PBP', prio) : '');
+  return kotak(`Checklist minggu ini · ${p.checklist.length} belum`, checklist) + kotak('Uang', uang) + (prio ? kotak(`Prioritas: ${p.prioritas.map(x => x.nama).join(', ')}`, prio) : '');
 }
 
 export function renderDigestHtml(d: Digest): string {

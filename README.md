@@ -16,7 +16,7 @@ halaman harian, dan asdos dibawa apa adanya. Yang berubah:
 | Halaman matkul | 7 seksi digulir panjang | 6 tab (Ringkasan, Nilai, Rencana, Materi, Strategi, Sumber), bisa dibuka langsung `?tab=nilai` |
 | Data | localStorage per perangkat | **Supabase**, sinkron laptop ⇄ HP (realtime), tetap jalan luring |
 | Login | kata sandi di env | **Supabase Auth**, satu email saja, tanpa pendaftaran |
-| Email | Senin, Rabu, Jumat | **setiap hari 06.00 WIB**, plus checklist, uang kemarin, progres SDA & PBP |
+| Email | Senin, Rabu, Jumat | **setiap hari 06.00 WIB**, plus checklist, uang kemarin, progres SDA, PBP & Basdat |
 | Keuangan | catat manual | **scan struk (OCR)**, anggaran bulanan & per kategori, edit/hapus, cari & saring |
 | HP | menu | tab bawah: Beranda · Matkul · Scan · Harian · Uang |
 
@@ -99,7 +99,7 @@ RLS `is_owner()` di setiap tabel & bucket · trigger `auth.users` menolak pembua
 
 ### Kartu orbit ([`lib/kartu.ts`](lib/kartu.ts), [`lib/orbit.ts`](lib/orbit.ts))
 
-Tiap item jadi satu "planet" yang digambar di canvas (warna item, minggu berjalan). Setiap item tampil sekali; hanya SDA, PBP, dan Keuangan yang muncul dua kali (`ITEM_GANDA`). **Untuk mengganti dengan gambar sendiri:**
+Tiap item jadi satu "planet" yang digambar di canvas (warna item, minggu berjalan). Setiap item tampil sekali; hanya SDA, PBP, dan Basdat yang muncul dua kali (`ITEM_GANDA`). **Untuk mengganti dengan gambar sendiri:**
 taruh gambar rasio 1.4:1.9 di `public/images/matkul/sda.png`, lalu isi `cover: '/images/matkul/sda.png'`
 di [`lib/courses/meta.ts`](lib/courses/meta.ts). Galaksi 3D di tengah dibuat dari partikel di [`components/home/orbit/galaxy.ts`](components/home/orbit/galaxy.ts).
 
@@ -113,7 +113,7 @@ Foto → dikecilkan → dibaca → **layar konfirmasi** → simpan. Tidak ada an
 
 ### Email harian ([`lib/email.ts`](lib/email.ts), [`lib/email-pribadi.ts`](lib/email-pribadi.ts))
 
-Isi: kelas hari ini · checklist minggu ini yang belum dicentang · uang kemarin & sisa anggaran · progres SDA & PBP ·
+Isi: kelas hari ini · checklist minggu ini yang belum dicentang · uang kemarin & sisa anggaran · progres SDA, PBP & Basdat ·
 kuis & lab dua pekan · tugas minggu ini & depan · jadwal tetap. Pratinjau: `/api/notify/preview`.
 Uji kirim kapan saja: `/api/cron/notify?key=<CRON_SECRET>&paksa=1`.
 

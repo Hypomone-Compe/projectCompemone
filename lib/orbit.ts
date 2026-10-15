@@ -1,8 +1,8 @@
 /* ==========================================================================
    Isi orbit beranda: lima matkul + halaman + tautan luar.
 
-   Tiap item muncul SEKALI; hanya beberapa item terpenting (SDA, PBP,
-   Keuangan) yang boleh muncul dua kali untuk mengisi slot sisa. Dulu 20
+   Tiap item muncul SEKALI; hanya matkul prioritas (SDA, PBP,
+   Basdat) yang boleh muncul dua kali untuk mengisi slot sisa. Dulu 20
    kartu diisi 5 matkul, jadi tiap matkul berulang empat kali.
    ========================================================================== */
 import type { ItemOrbit } from './kartu';
@@ -52,4 +52,4 @@ export function itemOrbit(matkul: KartuMatkul[]): ItemOrbit[] {
 }
 
 /** Item yang boleh tampil dua kali bila slot orbit lebih banyak dari item. */
-export const ITEM_GANDA = ['matkul-sda', 'matkul-pbp', 'keuangan'];
+export const ITEM_GANDA = ['matkul-sda', 'matkul-pbp', 'matkul-basdat'];

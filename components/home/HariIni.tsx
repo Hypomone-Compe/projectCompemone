@@ -87,7 +87,7 @@ export default function HariIni({
             <p className="text-[13px] font-bold text-muted">Jadwal kuliah</p>
             {sesi.length === 0 ? (
               <p className="mt-4 rounded-xl bg-off-white px-4 py-6 text-center text-sm text-muted">
-                Hari bebas kelas. Satu sesi fokus 50 menit untuk SDA atau PBP sudah cukup berarti.
+                Hari bebas kelas. Satu sesi fokus 50 menit untuk SDA, PBP, atau Basdat sudah cukup berarti.
               </p>
             ) : (
               <ol className="mt-4 space-y-2.5">

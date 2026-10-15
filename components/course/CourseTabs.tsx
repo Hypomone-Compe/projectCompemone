@@ -91,7 +91,7 @@ export default function CourseTabs({ initial, panels }: { initial: string; panel
                   onKeyDown={e => onKeyDown(e, i)}
                   className={cn(
                     'flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-bold transition-all duration-base ease-out-expo focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-pink-light',
-                    on ? 'bg-navy text-white shadow-sm' : 'text-secondary hover:text-navy',
+                    on ? 'bg-navy text-white shadow-sm' : 'text-secondary hover:text-ink',
                   )}
                 >
                   <t.Icon aria-hidden className={cn('size-4', on ? 'text-pink-light' : 'text-faint')} />

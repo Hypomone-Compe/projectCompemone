@@ -33,7 +33,7 @@ export function Toast({ variant = "info", title, description, className, ...prop
   return (
     <div
       role={variant === "error" ? "alert" : "status"}
-      className={cn("flex max-w-[380px] items-start gap-3 rounded-xl border border-border bg-white px-[18px] py-4 shadow-lg", className)}
+      className={cn("flex max-w-[380px] items-start gap-3 rounded-xl border border-border bg-surface px-[18px] py-4 shadow-lg", className)}
       {...props}
     >
       <div className={toastIcon({ variant })}>

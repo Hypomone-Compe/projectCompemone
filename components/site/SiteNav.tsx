@@ -63,7 +63,8 @@ export default function SiteNav() {
 
   return (
     <>
-      <div className="no-print fixed inset-x-0 top-0 z-50 pt-3 sm:pt-4">
+      {/* Di PWA status bar transparan: navbar turun sejauh poni/status bar. */}
+      <div className="no-print fixed inset-x-0 top-0 z-50" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
         <header className="flex justify-center px-3 sm:px-5">
           <nav
             aria-label="Utama"
@@ -74,17 +75,17 @@ export default function SiteNav() {
               atTop ? 'sm:py-2' : 'sm:py-1',
             )}
           >
-            <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Hypomonē @GRIT, beranda">
+            <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Hypomonē @LV, beranda">
               <Image
-                src="/images/logo-bem-ui.png"
+                src="/images/galaksi-ikon.png"
                 alt=""
-                width={876}
-                height={876}
+                width={256}
+                height={256}
                 priority
                 className="size-9 shrink-0 transition-[width,height] duration-500 ease-out-expo group-data-[compact=true]/nav:size-8"
               />
-              <span className="whitespace-nowrap text-[17px] font-extrabold tracking-tight text-navy">
-                Hypomonē <span className="font-bold text-accent">@GRIT</span>
+              <span className="whitespace-nowrap text-[17px] font-extrabold tracking-tight text-ink">
+                Hypomonē <span className="font-bold text-accent">@LV</span>
               </span>
             </Link>
 
@@ -97,7 +98,7 @@ export default function SiteNav() {
                 onClick={bukaSapaan}
                 aria-label="Sapaan hari ini"
                 title="Sapaan hari ini"
-                className="hidden size-[38px] items-center justify-center rounded-full text-secondary transition-colors hover:bg-navy-5 hover:text-navy lg:flex"
+                className="hidden size-[38px] items-center justify-center rounded-full text-secondary transition-colors hover:bg-navy-5 hover:text-ink lg:flex"
               >
                 <Sparkles aria-hidden className="size-[18px]" />
               </button>
@@ -152,16 +153,16 @@ function DesktopLinks({ pathname, diMatkul }: { pathname: string; diMatkul: bool
     };
   }, [buka]);
 
-  const garis = 'after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-navy';
+  const garis = 'after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-ink';
   const diLain = ['/', '/harian', '/asdos'].some(h => aktifDi(pathname, h));
-  const item = 'flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-secondary transition-colors hover:bg-navy-5 hover:text-navy';
+  const item = 'flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-bold text-secondary transition-colors hover:bg-navy-5 hover:text-ink';
 
   const pemicu = (id: 'matkul' | 'lain', label: string, aktif: boolean) => (
     <button
       type="button"
       onClick={() => setBuka(b => (b === id ? null : id))}
       aria-expanded={buka === id}
-      className={cn('relative flex items-center gap-1 whitespace-nowrap py-1.5 transition-colors hover:text-navy', aktif && cn('font-bold text-navy', garis))}
+      className={cn('relative flex items-center gap-1 whitespace-nowrap py-1.5 transition-colors hover:text-ink', aktif && cn('font-bold text-ink', garis))}
     >
       {label} <ChevronDown aria-hidden className={cn('size-4 transition-transform', buka === id && 'rotate-180')} />
     </button>
@@ -172,12 +173,12 @@ function DesktopLinks({ pathname, diMatkul }: { pathname: string; diMatkul: bool
       <div className="relative">
         {pemicu('matkul', 'Mata kuliah', diMatkul)}
         {buka === 'matkul' && (
-          <div className="absolute left-1/2 top-[calc(100%+14px)] w-[300px] -translate-x-1/2 rounded-xl border border-border bg-white p-2 shadow-lg">
+          <div className="absolute left-1/2 top-[calc(100%+14px)] w-[300px] -translate-x-1/2 rounded-xl border border-border bg-surface p-2 shadow-lg">
             {META.map(c => (
               <Link key={c.id} href={`/matkul/${c.id}`} className="flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-navy-5">
                 <span className="size-2.5 shrink-0 rounded-full" style={{ background: c.accent }} aria-hidden />
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2 text-sm font-bold text-navy">
+                  <span className="flex items-center gap-2 text-sm font-bold text-ink">
                     {shortName(c)}
                     {c.fokus && <span className="rounded-full bg-pink-pale px-2 py-0.5 text-[10.5px] font-bold text-accent-hover">Prioritas</span>}
                   </span>
@@ -192,7 +193,7 @@ function DesktopLinks({ pathname, diMatkul }: { pathname: string; diMatkul: bool
       <Link
         href="/keuangan"
         aria-current={aktifDi(pathname, '/keuangan') ? 'page' : undefined}
-        className={cn('relative py-1.5 transition-colors hover:text-navy', aktifDi(pathname, '/keuangan') && cn('font-bold text-navy', garis))}
+        className={cn('relative py-1.5 transition-colors hover:text-ink', aktifDi(pathname, '/keuangan') && cn('font-bold text-ink', garis))}
       >
         Keuangan
       </Link>
@@ -200,7 +201,7 @@ function DesktopLinks({ pathname, diMatkul }: { pathname: string; diMatkul: bool
       <div className="relative">
         {pemicu('lain', 'Lainnya', diLain)}
         {buka === 'lain' && (
-          <div className="absolute right-0 top-[calc(100%+14px)] w-[250px] rounded-xl border border-border bg-white p-2 shadow-lg">
+          <div className="absolute right-0 top-[calc(100%+14px)] w-[250px] rounded-xl border border-border bg-surface p-2 shadow-lg">
             <Link href="/" className={item}><Home aria-hidden className="size-4" /> Beranda</Link>
             <Link href="/harian" className={item}><HeartPulse aria-hidden className="size-4" /> Harian</Link>
             <Link href="/asdos" className={item}><BookOpen aria-hidden className="size-4" /> Asisten dosen</Link>
@@ -229,7 +230,7 @@ function BottomTabs({ pathname, onMatkul, matkulOpen }: { pathname: string; onMa
         aria-current={on ? 'page' : undefined}
         className={cn(
           'flex flex-1 flex-col items-center gap-1 rounded-full py-2 text-[11px] font-bold transition-colors',
-          on ? 'text-navy' : 'text-muted',
+          on ? 'text-ink' : 'text-muted',
         )}
       >
         <Icon aria-hidden className={cn('size-5', on && 'text-accent')} strokeWidth={on ? 2.4 : 2} />
@@ -250,7 +251,7 @@ function BottomTabs({ pathname, onMatkul, matkulOpen }: { pathname: string; onMa
         aria-expanded={matkulOpen}
         className={cn(
           'flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-bold transition-colors',
-          pathname.startsWith('/matkul') || matkulOpen ? 'text-navy' : 'text-muted',
+          pathname.startsWith('/matkul') || matkulOpen ? 'text-ink' : 'text-muted',
         )}
       >
         <BookOpen aria-hidden className={cn('size-5', pathname.startsWith('/matkul') && 'text-accent')} />
@@ -267,9 +268,9 @@ function BottomTabs({ pathname, onMatkul, matkulOpen }: { pathname: string; onMa
 function Sheet({ jenis, pathname, onClose }: { jenis: 'menu' | 'matkul'; pathname: string; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-label={jenis === 'menu' ? 'Menu' : 'Mata kuliah'}>
-      <button type="button" aria-label="Tutup" onClick={onClose} className="absolute inset-0 bg-navy/40 backdrop-blur-sm" />
+      <button type="button" aria-label="Tutup" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="absolute inset-x-3 bottom-3 max-h-[82dvh] overflow-y-auto rounded-2xl bg-white p-4 shadow-xl"
+        className="absolute inset-x-3 bottom-3 max-h-[82dvh] overflow-y-auto rounded-2xl bg-surface p-4 shadow-xl"
         style={{ animation: 'rise .35s var(--ease-out) both', marginBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -292,7 +293,7 @@ function Sheet({ jenis, pathname, onClose }: { jenis: 'menu' | 'matkul'; pathnam
                   {c.short.slice(0, 3).toUpperCase()}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2 text-[15px] font-bold text-navy">
+                  <span className="flex items-center gap-2 text-[15px] font-bold text-ink">
                     {shortName(c)}
                     {c.fokus && <span className="rounded-full bg-pink-pale px-2 py-0.5 text-[10.5px] font-bold text-accent-hover">Prioritas</span>}
                   </span>
@@ -312,7 +313,7 @@ function Sheet({ jenis, pathname, onClose }: { jenis: 'menu' | 'matkul'; pathnam
                   href={l.href}
                   className={cn(
                     'rounded-xl border border-border px-4 py-3 text-[15px] font-bold',
-                    aktifDi(pathname, l.href) ? 'bg-navy text-white' : 'text-navy',
+                    aktifDi(pathname, l.href) ? 'bg-navy text-white' : 'text-ink',
                   )}
                 >
                   {l.label}

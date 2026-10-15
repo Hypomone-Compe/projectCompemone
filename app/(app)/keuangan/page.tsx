@@ -16,10 +16,10 @@ const SECTIONS: NavSection[] = [
 ];
 
 /* Hijau halaman ini; warna deret grafik tetap dari validasi buta warna di Grafik.tsx. */
-const ACCENT = '#16784a';
+const ACCENT = '#2fae74';
 
 export default function KeuanganPage() {
-  const vars = { '--c': ACCENT, '--c-on': '#ffffff', '--c-pale': '#e9f6ef' } as CSSProperties;
+  const vars = { '--c': ACCENT, '--c-on': '#ffffff', '--c-pale': 'rgba(47, 174, 116, 0.15)' } as CSSProperties;
   return (
     <div style={vars}>
       <PageHeader

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* =========================================================================
-   Hypomonē @GRIT, design tokens
+   Hypomonē @LV, design tokens
 
    Token di blok pertama disalin apa adanya dari design system Kabinet
    TerusTerang (bemuidev/designsystem/companyprofile/app/globals.css):
@@ -15,61 +15,64 @@
    masih memakai var(--ink) ikut berubah tanpa disunting satu per satu.
    ========================================================================= */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* base */
+  /* ---- ruang angkasa: base hampir hitam, permukaan nila gelap ---- */
   --white: #ffffff;
-  --off-white: #fafafa;
-  --bg: var(--white);
+  --space: #05060d;
+  --bg: var(--space);
+  --surface: #0d1022;
+  --surface-2: #121632;
+  --off-white: #0a0c1a;
 
-  /* brand */
-  --navy: #0b102d;
-  --navy-80: rgba(11, 16, 45, 0.8);
-  --navy-70: rgba(11, 16, 45, 0.7);
-  --navy-50: rgba(11, 16, 45, 0.5);
-  --navy-30: rgba(11, 16, 45, 0.3);
-  --navy-10: rgba(11, 16, 45, 0.08);
-  --navy-05: rgba(11, 16, 45, 0.04);
+  /* navy = permukaan menonjol (blok penekanan, tombol, tab aktif) */
+  --navy: #171c45;
+  /* teks utama */
+  --fg-ink: #eef0fb;
 
-  --blue: #475ca3;
-  --blue-hover: #3a4c8c;
+  /* turunan navy di tema terang dulu = lapisan tipis; di gelap = putih transparan */
+  --navy-80: rgba(238, 240, 251, 0.8);
+  --navy-70: rgba(238, 240, 251, 0.7);
+  --navy-50: rgba(238, 240, 251, 0.5);
+  --navy-30: rgba(238, 240, 251, 0.28);
+  --navy-10: rgba(238, 240, 251, 0.09);
+  --navy-05: rgba(238, 240, 251, 0.05);
+
+  --blue: #8297f0;
+  --blue-hover: #6f86e8;
   --blue-soft: #9cb3d3;
-  --blue-pale: #eef1f9;
+  --blue-pale: rgba(130, 151, 240, 0.14);
 
-  --maroon: #5e121c;
-  --maroon-pale: #fbeeef;
+  --maroon: #f29bb0;
+  --maroon-pale: rgba(242, 155, 176, 0.12);
 
-  --red: #82181a;
-  --red-hover: #651214;
-  --red-pale: #fdeeee;
+  --red: #f06a6a;
+  --red-hover: #e05252;
+  --red-pale: rgba(240, 106, 106, 0.13);
 
-  --pink: #d64c6f;
-  --pink-light: #ffced8;
-  --pink-pale: #fff2f5;
+  --pink: #e8628a;
+  --pink-light: #ffcdd9;
+  --pink-pale: rgba(232, 98, 138, 0.15);
 
   --accent: var(--pink);
-  --accent-hover: #c13a5c;
+  --accent-hover: #f383a3;
   --accent-pale: var(--pink-pale);
 
-  /* status */
-  --success: #1e9e5a;
-  --success-pale: #e7f7ef;
-  --warning: #b9790a;
-  --warning-pale: #fff6e0;
+  --success: #3fd08a;
+  --success-pale: rgba(63, 208, 138, 0.13);
+  --warning: #f2b84b;
+  --warning-pale: rgba(242, 184, 75, 0.13);
 
-  /* text */
-  --text-primary: var(--navy);
-  --text-secondary: var(--navy-70);
-  --text-muted: rgba(11, 16, 45, 0.58);
-  --text-faint: var(--navy-30);
+  --text-primary: var(--fg-ink);
+  --text-secondary: rgba(238, 240, 251, 0.74);
+  --text-muted: rgba(238, 240, 251, 0.56);
+  --text-faint: rgba(238, 240, 251, 0.32);
 
-  /* surfaces */
-  --card-bg: var(--white);
-  --border: #e7e7ec;
-  --border-soft: #f0f0f4;
-  --divider: #ececf1;
+  --card-bg: var(--surface);
+  --border: rgba(238, 240, 251, 0.1);
+  --border-soft: rgba(238, 240, 251, 0.06);
+  --divider: rgba(238, 240, 251, 0.08);
 
-  /* radius */
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
@@ -77,40 +80,39 @@
   --r-2xl: 28px;
   --r-full: 9999px;
 
-  /* shadow, navy-tinted */
-  --shadow-xs: 0 1px 2px rgba(11, 16, 45, 0.05);
-  --shadow-sm: 0 1px 3px rgba(11, 16, 45, 0.09), 0 1px 2px -1px rgba(11, 16, 45, 0.09);
-  --shadow-md: 0 4px 14px rgba(11, 16, 45, 0.09), 0 2px 6px rgba(11, 16, 45, 0.06);
-  --shadow-lg: 0 20px 25px -5px rgba(11, 16, 45, 0.12), 0 8px 10px -6px rgba(11, 16, 45, 0.08);
-  --shadow-xl: 0 25px 50px -12px rgba(11, 16, 45, 0.2);
+  /* bayangan gelap + sedikit cahaya nila di tepi */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(238, 240, 251, 0.03);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(238, 240, 251, 0.04);
+  --shadow-lg: 0 20px 40px -8px rgba(0, 0, 0, 0.6), 0 0 32px -12px rgba(130, 151, 240, 0.25);
+  --shadow-xl: 0 25px 60px -12px rgba(0, 0, 0, 0.7), 0 0 40px -10px rgba(232, 98, 138, 0.25);
 
-  /* motion */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 150ms;
   --dur-base: 220ms;
   --dur-slow: 380ms;
 
-  /* glass */
-  --glass-bg: rgba(255, 255, 255, 0.55);
-  --glass-bg-strong: rgba(255, 255, 255, 0.72);
-  --glass-bg-soft: rgba(255, 255, 255, 0.3);
-  --glass-border: rgba(255, 255, 255, 0.9);
+  /* kaca gelap */
+  --glass-bg: rgba(14, 18, 40, 0.55);
+  --glass-bg-strong: rgba(14, 18, 40, 0.72);
+  --glass-bg-soft: rgba(14, 18, 40, 0.35);
+  --glass-border: rgba(238, 240, 251, 0.12);
   --glass-blur: blur(20px);
-  --glass-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5), 0 8px 32px rgba(94, 18, 28, 0.14),
-    inset 0 0 20px rgba(255, 255, 255, 0.55), inset 0 2px 4px rgba(255, 255, 255, 0.95);
-  --glass-shadow-soft: 0 0 0 1px rgba(255, 255, 255, 0.45), 0 20px 44px rgba(11, 16, 45, 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --glass-shadow: 0 0 0 1px rgba(238, 240, 251, 0.06), 0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(238, 240, 251, 0.08);
+  --glass-shadow-soft: 0 0 0 1px rgba(238, 240, 251, 0.05), 0 20px 44px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(238, 240, 251, 0.07);
 
-  /* --- jembatan token Sandbox → palet baru ---------------------------- */
-  --ink: var(--navy);
-  --ink-soft: #1d2346;
+  /* --- jembatan token Sandbox → palet gelap ---------------------------- */
+  --ink: var(--fg-ink);
+  --ink-soft: rgba(238, 240, 251, 0.85);
   --ink-mute: var(--text-muted);
-  --paper: var(--white);
-  --paper-2: #f5f6fa;
-  --paper-3: #e9eaf1;
-  --fg: var(--navy);
+  --paper: var(--surface);
+  --paper-2: var(--off-white);
+  --paper-3: var(--surface-2);
+  --fg: var(--fg-ink);
   --rule: var(--divider);
-  --rule-strong: #d9dae3;
+  --rule-strong: rgba(238, 240, 251, 0.18);
   --lime: var(--pink-light);
   --green: var(--success);
   --amber: var(--warning);
@@ -119,10 +121,9 @@
   --gold: var(--warning);
   --cream: var(--warning-pale);
 
-  /* Aksen aktif, ditimpa per matkul lewat style={{ '--c': ... }}. */
-  --c: var(--navy);
-  --c-on: var(--white);
-  --c-pale: color-mix(in srgb, var(--c) 9%, white);
+  --c: var(--blue);
+  --c-on: #ffffff;
+  --c-pale: color-mix(in srgb, var(--c) 15%, transparent);
 
   --t-mega: clamp(3rem, 10vw, 8.5rem);
   --t-xxl: clamp(2rem, 4.6vw, 3.25rem);
@@ -152,13 +153,20 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    background: var(--space);
+    /* PWA: tidak bisa tergeser ke samping, dan tarikan di ujung halaman
+       tidak memperlihatkan latar putih/kosong. clip (bukan hidden) supaya
+       elemen sticky tetap bekerja. */
+    overflow-x: clip;
+    overscroll-behavior: none;
   }
   body {
     background: var(--bg);
     color: var(--text-primary);
     font-family: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    overflow-x: clip;
+    overscroll-behavior: none;
   }
   h1, h2, h3, h4 {
     font-weight: 700;
@@ -190,13 +198,14 @@
    ========================================================================= */
 @layer components {
   /* ---- latar dari design system ---- */
+  /* Nebula: versi gelap mesh-bg design system. */
   .mesh-fallback {
     background:
-      radial-gradient(42% 50% at 14% 20%, rgba(71, 92, 163, 0.5) 0%, rgba(71, 92, 163, 0) 70%),
-      radial-gradient(38% 46% at 86% 10%, rgba(255, 206, 216, 0.85) 0%, rgba(255, 206, 216, 0) 70%),
-      radial-gradient(46% 50% at 50% 48%, rgba(214, 76, 111, 0.38) 0%, rgba(214, 76, 111, 0) 70%),
-      radial-gradient(30% 36% at 30% 70%, rgba(156, 179, 211, 0.45) 0%, rgba(156, 179, 211, 0) 70%),
-      var(--white);
+      radial-gradient(42% 50% at 14% 20%, rgba(71, 92, 163, 0.38) 0%, rgba(71, 92, 163, 0) 70%),
+      radial-gradient(38% 46% at 86% 10%, rgba(232, 98, 138, 0.24) 0%, rgba(232, 98, 138, 0) 70%),
+      radial-gradient(46% 50% at 50% 48%, rgba(120, 70, 190, 0.2) 0%, rgba(120, 70, 190, 0) 70%),
+      radial-gradient(30% 36% at 30% 70%, rgba(156, 179, 211, 0.16) 0%, rgba(156, 179, 211, 0) 70%),
+      var(--space);
   }
   .mesh-mask {
     -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
@@ -291,9 +300,9 @@
   .on-light {
     --fg: var(--navy);
     background: var(--white);
-    color: var(--navy);
+    color: var(--fg-ink);
   }
-  .on-color { color: var(--navy); }
+  .on-color { color: var(--fg-ink); }
 
   /* ---- navigasi lama (dipakai sub-navigasi) ---- */
   .brand {
@@ -313,7 +322,7 @@
     transition: background var(--dur-base), color var(--dur-base);
     white-space: nowrap;
   }
-  .nav__link:hover { color: var(--navy); background: var(--navy-05); }
+  .nav__link:hover { color: var(--fg-ink); background: var(--navy-05); }
   .nav__link.is-active { color: #fff; background: var(--navy); }
 
   /* ---- tombol: varian primary/navy/outline design system ---- */
@@ -345,7 +354,7 @@
     border: 1.5px solid var(--border);
     box-shadow: none;
   }
-  .btn--ghost:hover { border-color: var(--navy); background: var(--navy-05); box-shadow: none; }
+  .btn--ghost:hover { border-color: var(--fg-ink); background: var(--navy-05); box-shadow: none; }
   .on-dark .btn--ghost { --btn-bg: transparent; --btn-fg: #fff; border-color: rgba(255, 255, 255, 0.3); }
   .btn--light { --btn-bg: #ffffff; --btn-fg: var(--navy); }
   .btn--c { --btn-bg: var(--c); --btn-fg: var(--c-on); }
@@ -368,7 +377,7 @@
     font-weight: 700;
     line-height: 1.3;
     white-space: nowrap;
-    background: #fff;
+    background: var(--surface);
     color: var(--text-secondary);
     border: 1.5px solid var(--border);
   }
@@ -376,7 +385,7 @@
   .chip--c { background: var(--c-pale); color: var(--c-text, var(--c)); border-color: transparent; }
   .chip--lime { background: var(--pink-pale); color: var(--accent-hover); border-color: transparent; }
   .chip--red { background: var(--red-pale); color: var(--red); border-color: transparent; }
-  .chip--amber { background: var(--warning-pale); color: #8a5b07; border-color: transparent; }
+  .chip--amber { background: var(--warning-pale); color: var(--warning); border-color: transparent; }
   .on-dark .chip { background: rgba(255, 255, 255, 0.1); color: #fff; border-color: transparent; }
 
   .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: currentColor; }
@@ -392,8 +401,8 @@
 
   /* ---- kartu ---- */
   .card {
-    background: #fff;
-    color: var(--navy);
+    background: var(--surface);
+    color: var(--fg-ink);
     border: 1px solid var(--border);
     border-radius: var(--r-xl);
     padding: clamp(1.15rem, 2vw, 1.6rem);
@@ -408,7 +417,7 @@
     flex-direction: column;
     gap: 0.35rem;
     min-width: 0;
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--r-xl);
     padding: 1.25rem 1.35rem;
@@ -522,8 +531,8 @@
     display: flex;
     flex-direction: column;
     text-align: left;
-    background: #fff;
-    color: var(--navy);
+    background: var(--surface);
+    color: var(--fg-ink);
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
     padding: 0.85rem 0.9rem 0.8rem;
@@ -537,7 +546,7 @@
   .week__tags { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 0.5rem; }
   .week__tag { height: 5px; width: 18px; border-radius: 99px; }
   .week__foot { font-size: 12px; font-weight: 700; display: flex; align-items: flex-end; justify-content: space-between; gap: 0.5rem; }
-  .week--now { background: var(--navy); color: #fff; border-color: var(--navy); box-shadow: var(--shadow-lg); }
+  .week--now { background: var(--navy); color: #fff; border-color: var(--fg-ink); box-shadow: var(--shadow-lg); }
   .week--now .week__num { color: var(--pink-light); }
   .week--now .week__range { color: rgba(255, 255, 255, 0.65); }
   .week--exam { background: var(--pink-pale); border-color: var(--pink-light); }
@@ -556,15 +565,15 @@
   .minggu[data-week-state='now'] .minggu__label { color: var(--c-text, var(--c)); }
 
   /* ---- formulir ---- */
-  .field__label { display: block; font-size: 13.5px; font-weight: 700; color: var(--navy); margin-bottom: 7px; }
+  .field__label { display: block; font-size: 13.5px; font-weight: 700; color: var(--fg-ink); margin-bottom: 7px; }
   .on-dark .field__label { color: #fff; }
   .input,
   .textarea,
   .tumbuh::after {
     width: 100%;
     padding: 12px 15px;
-    background: #fff;
-    color: var(--navy);
+    background: var(--surface);
+    color: var(--fg-ink);
     border: 1.5px solid var(--border);
     border-radius: var(--r-sm);
     font-size: 15px;
@@ -593,8 +602,8 @@
     width: 4.4rem;
     padding: 0.55rem 0.35rem;
     text-align: center;
-    background: #fff;
-    color: var(--navy);
+    background: var(--surface);
+    color: var(--fg-ink);
     border: 1.5px solid var(--border);
     border-radius: var(--r-sm);
     font-variant-numeric: tabular-nums;
@@ -614,10 +623,10 @@
     border-radius: var(--r-full);
     font-size: 1rem;
     font-weight: 700;
-    background: #fff;
+    background: var(--surface);
     transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
   }
-  .stepper:hover:not(:disabled) { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .stepper:hover:not(:disabled) { background: var(--navy); color: #fff; border-color: var(--fg-ink); }
   .stepper:disabled { opacity: 0.35; cursor: not-allowed; }
 
   /* Pilihan (filter, status): pill tab design system. */
@@ -635,10 +644,10 @@
     white-space: nowrap;
     transition: all var(--dur-base) var(--ease-out);
   }
-  .opt:hover { color: var(--navy); border-color: var(--navy-30); }
-  .opt.is-on { background: var(--navy); color: #fff; border-color: var(--navy); box-shadow: var(--shadow-sm); }
+  .opt:hover { color: var(--fg-ink); border-color: var(--navy-30); }
+  .opt.is-on { background: var(--navy); color: #fff; border-color: var(--fg-ink); box-shadow: var(--shadow-sm); }
   .on-dark .opt { color: rgba(255, 255, 255, 0.75); border-color: rgba(255, 255, 255, 0.2); }
-  .on-dark .opt.is-on { background: #fff; color: var(--navy); }
+  .on-dark .opt.is-on { background: var(--surface); color: var(--fg-ink); }
 
   .subnav {
     display: flex;
@@ -659,15 +668,15 @@
     gap: 0.75rem;
     padding: 16px 18px;
     border-radius: var(--r-lg);
-    border: 1px solid #dce3f2;
+    border: 1px solid rgba(130, 151, 240, 0.28);
     background: var(--blue-pale);
     color: var(--blue);
     align-items: flex-start;
     font-size: 14px;
     line-height: 1.55;
   }
-  .alert--red { border-color: #f4d5d4; background: var(--red-pale); color: var(--red); }
-  .alert--amber { border-color: #f5e3b5; background: #fff8e8; color: #8a5b07; }
+  .alert--red { border-color: rgba(240, 106, 106, 0.3); background: var(--red-pale); color: var(--red); }
+  .alert--amber { border-color: rgba(242, 184, 75, 0.3); background: var(--warning-pale); color: var(--warning); }
   .alert--lime { border-color: var(--pink-light); background: var(--pink-pale); color: var(--maroon); }
   .alert--ink { border-color: transparent; background: var(--navy); color: #fff; }
 
@@ -697,6 +706,11 @@
     border-radius: 6px;
   }
 
+  /* iOS memperbesar halaman otomatis saat kolom isian < 16px difokus, dan
+     tidak mengecil lagi: penyebab utama tampilan PWA "keluar batas". */
+  @media (max-width: 1023px) {
+    input, select, textarea, .input, .textarea, .score { font-size: 16px !important; }
+  }
   @media (display-mode: standalone) {
     body { padding-bottom: env(safe-area-inset-bottom); }
     .shell { padding-inline: max(var(--gutter), env(safe-area-inset-left)); }
@@ -758,5 +772,5 @@ html.lenis, html.lenis body { height: auto; }
 
 @media print {
   .no-print { display: none !important; }
-  body { background: #fff; color: #000; }
+  body { background: var(--surface); color: #000; }
 }

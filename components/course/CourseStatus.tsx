@@ -47,7 +47,7 @@ export function CourseStatus({ c }: { c: KartuMatkul }) {
         }
         href={`/matkul/${c.id}?tab=nilai`}
       />
-      <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
         <p className="flex items-center gap-2 text-[12.5px] font-bold text-muted">
           <BookOpenCheck aria-hidden className="size-4 text-c" /> Pemahaman materi
         </p>
@@ -71,7 +71,7 @@ function Kotak({ Icon, label, nilai, ket, href }: { Icon: LucideIcon; label: str
       <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-secondary">{ket}</p>
     </>
   );
-  const cls = 'block rounded-2xl border border-border bg-white p-4 shadow-sm';
+  const cls = 'block rounded-2xl border border-border bg-surface p-4 shadow-sm';
   return href ? (
     <Link href={href} scroll={false} className={cn(cls, 'transition-all hover:-translate-y-0.5 hover:shadow-md')}>
       {isi}
@@ -101,7 +101,7 @@ export function ChecklistMatkul({ cid, mingguKey, saran }: { cid: string; minggu
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
       <div className="flex items-baseline justify-between gap-3">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Checklist minggu ini</p>
         {items.length > 0 && (
@@ -122,7 +122,7 @@ export function ChecklistMatkul({ cid, mingguKey, saran }: { cid: string; minggu
                 aria-label={it.done ? `Batalkan: ${it.text}` : `Selesai: ${it.text}`}
                 className={cn(
                   'flex size-6 shrink-0 items-center justify-center rounded-md border-[1.5px] transition-colors',
-                  it.done ? 'border-transparent bg-c text-white' : 'border-border bg-white',
+                  it.done ? 'border-transparent bg-c text-white' : 'border-border bg-surface',
                 )}
               >
                 {it.done && <Check aria-hidden className="size-4" />}
@@ -163,7 +163,7 @@ export function ChecklistMatkul({ cid, mingguKey, saran }: { cid: string; minggu
                 key={s}
                 type="button"
                 onClick={() => addPlanItem(mingguKey, s, cid)}
-                className="max-w-full truncate rounded-full border-[1.5px] border-dashed border-border px-3 py-1.5 text-left text-[12.5px] font-semibold text-secondary hover:border-navy hover:text-navy"
+                className="max-w-full truncate rounded-full border-[1.5px] border-dashed border-border px-3 py-1.5 text-left text-[12.5px] font-semibold text-secondary hover:border-ink hover:text-ink"
               >
                 + {s}
               </button>

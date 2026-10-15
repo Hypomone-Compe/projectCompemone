@@ -11,6 +11,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
+import Kucing from './maskot/Kucing';
 import { fmtDateLong } from '@/lib/kalender';
 import { quoteForDate } from '@/lib/quotes';
 
@@ -95,17 +96,17 @@ export default function Sapaan({ ringkasan }: { ringkasan: RingkasanSapaan }) {
         aria-modal="true"
         aria-label="Sapaan pembuka"
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-[34rem] overflow-hidden rounded-2xl bg-white text-navy shadow-xl"
+        className="w-full max-w-[34rem] overflow-hidden rounded-2xl bg-surface text-ink shadow-xl"
         style={{ animation: 'naik .5s var(--ease) both' }}
       >
         {/* kepala: mesh gradient design system */}
         <div className="mesh-fallback relative px-[clamp(1.3rem,3vw,2rem)] py-[clamp(1.3rem,3vw,1.9rem)]">
           <div className="flex items-center justify-between gap-4">
             <span className="flex items-center gap-2.5 text-[17px] font-extrabold tracking-tight">
-              <Image src="/images/logo-bem-ui.png" alt="" width={876} height={876} className="size-9" />
-              Hypomonē <span className="text-accent">@GRIT</span>
+              <Image src="/images/galaksi-ikon.png" alt="" width={256} height={256} className="size-9" />
+              Hypomonē <span className="text-accent">@LV</span>
             </span>
-            <span className="rounded-full bg-white/80 px-3 py-1 text-[12.5px] font-bold text-navy shadow-xs">
+            <span className="rounded-full bg-white/10 px-3 py-1 text-[12.5px] font-bold text-ink">
               {fase === 'run'
                 ? `Minggu ${angka} / ${totalMinggu}`
                 : fase === 'pre'
@@ -114,9 +115,16 @@ export default function Sapaan({ ringkasan }: { ringkasan: RingkasanSapaan }) {
             </span>
           </div>
 
-          <p className="mt-6 text-xs font-bold uppercase tracking-[0.2em] text-accent-hover">{fmtDateLong(today)}</p>
-          <p className="mt-3 text-[clamp(1.4rem,4vw,1.9rem)] font-extrabold leading-tight tracking-tight">{q.t}</p>
-          <p className="mt-1 text-[clamp(1.2rem,3.4vw,1.6rem)] font-bold leading-tight text-accent">{q.s}</p>
+          {/* Maskot menyambut setiap kali situs dibuka, kutipan hari ini jadi gelembung bicaranya. */}
+          <div className="mt-4 flex items-end gap-2 sm:gap-4">
+            <Kucing ukuran={150} className="-mb-2 -ml-3 shrink-0" />
+            <div className="relative mb-4 min-w-0 rounded-2xl border border-glass-border bg-glass-strong p-4 shadow-glass-soft backdrop-blur-glass">
+              <span aria-hidden className="absolute -left-2 bottom-5 size-4 rotate-45 border-b border-l border-glass-border bg-[#141938]" />
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent-hover">{fmtDateLong(today)}</p>
+              <p className="mt-2 text-[clamp(1.15rem,3.4vw,1.5rem)] font-extrabold leading-tight tracking-tight">{q.t}</p>
+              <p className="mt-1 text-[clamp(1rem,3vw,1.25rem)] font-bold leading-tight text-accent">{q.s}</p>
+            </div>
+          </div>
         </div>
 
         {/* isi */}

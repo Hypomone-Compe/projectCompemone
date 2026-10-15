@@ -17,7 +17,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
           const last = i === items.length - 1;
           return (
             <React.Fragment key={it.label + i}>
-              <li className={cn(last && "text-navy")} aria-current={last ? "page" : undefined}>
+              <li className={cn(last && "text-ink")} aria-current={last ? "page" : undefined}>
                 {last || !it.href ? it.label : <Link href={it.href} className="transition-colors hover:text-accent">{it.label}</Link>}
               </li>
               {!last && <ChevronRight aria-hidden className="size-3.5 text-faint" />}

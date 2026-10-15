@@ -73,11 +73,11 @@ export function Tabs({
               variant === "pill"
                 ? cn(
                     "rounded-full px-5 py-[9px] text-sm",
-                    active ? "bg-navy text-white shadow-sm" : "text-secondary hover:text-navy"
+                    active ? "bg-navy text-white shadow-sm" : "text-secondary hover:text-ink"
                   )
                 : cn(
                     "-mb-[1.5px] border-b-[2.5px] px-0.5 py-3 text-[14.5px]",
-                    active ? "border-accent text-navy" : "border-transparent text-muted hover:text-navy"
+                    active ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink"
                   )
             )}
           >

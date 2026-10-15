@@ -60,7 +60,7 @@ export default async function CoursePage({
         </div>
         <div className="space-y-4">
           <MingguKartu judul="Minggu depan" m={k.mingguDepan} />
-          <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Jadwal tetap</p>
             <ul className="mt-3 divide-y divide-divider">
               {c.sessions.map((s, i) => (
@@ -79,7 +79,7 @@ export default async function CoursePage({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr]">
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+        <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Informasi umum</p>
           <p className="mt-3 text-[15px] leading-relaxed text-secondary">{stripEmoji(c.desc)}</p>
           <dl className="mt-4 divide-y divide-divider border-t border-divider">
@@ -144,7 +144,7 @@ export default async function CoursePage({
           const t = parseFlag(s.t);
           const d = parseFlag(s.d);
           return (
-            <li key={i} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+            <li key={i} className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
               <span className="num text-2xl font-extrabold text-c">{String(i + 1).padStart(2, '0')}</span>
               <Rich as="h3" html={t.text.replace(/^\d+\.\s*/, '')} className="mt-2 block text-[16px] font-extrabold leading-snug tracking-tight" />
               <Rich as="p" html={d.text} className="mt-2 block text-[14px] leading-relaxed text-secondary" />
@@ -186,11 +186,11 @@ export default async function CoursePage({
           return (
             <li key={i}>
               {r.url ? (
-                <a href={r.url} target="_blank" rel="noreferrer" className="block h-full rounded-2xl border border-border bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg">
+                <a href={r.url} target="_blank" rel="noreferrer" className="block h-full rounded-2xl border border-border bg-surface p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg">
                   {isi}
                 </a>
               ) : (
-                <div className="h-full rounded-2xl border border-border bg-white p-5">{isi}</div>
+                <div className="h-full rounded-2xl border border-border bg-surface p-5">{isi}</div>
               )}
             </li>
           );
@@ -226,7 +226,7 @@ export default async function CoursePage({
       <div className="shell pb-16">
         <Link
           href={`/matkul/${nextCourse.id}`}
-          className="group flex items-center justify-between gap-4 rounded-2xl border border-border bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+          className="group flex items-center justify-between gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
         >
           <span>
             <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Matkul berikutnya</span>
@@ -255,7 +255,7 @@ function Judul({ eyebrow, judul, ket }: { eyebrow: string; judul: string; ket?: 
 
 function MingguKartu({ judul, m, kuat }: { judul: string; m: MingguRingkas | null; kuat?: boolean }) {
   return (
-    <div className={kuat ? 'rounded-2xl bg-navy p-5 text-white shadow-lg sm:p-6' : 'rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6'}>
+    <div className={kuat ? 'rounded-2xl bg-navy p-5 text-white shadow-lg sm:p-6' : 'rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6'}>
       <div className="flex items-baseline justify-between gap-3">
         <p className={`text-xs font-bold uppercase tracking-[0.2em] ${kuat ? 'text-pink-light' : 'text-muted'}`}>{judul}</p>
         {m && <p className={`num text-[12.5px] font-semibold ${kuat ? 'text-white/60' : 'text-muted'}`}>{m.range}</p>}

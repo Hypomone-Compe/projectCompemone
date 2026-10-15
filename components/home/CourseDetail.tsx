@@ -236,7 +236,7 @@ export default function CourseDetail({ matkul, covers, initialIndex, origin, get
         aria-modal="true"
         aria-label={`Mata kuliah ${c.name}`}
         data-lenis-prevent
-        className="fixed inset-0 z-40 overflow-y-auto overflow-x-hidden overscroll-contain bg-white"
+        className="fixed inset-0 z-40 overflow-y-auto overflow-x-hidden overscroll-contain bg-space"
         style={{ opacity: 0, ['--c' as string]: c.accent }}
       >
         <OverlayGrid scroller={wrapRef} />
@@ -264,7 +264,7 @@ export default function CourseDetail({ matkul, covers, initialIndex, origin, get
                 <button
                   type="button"
                   onClick={() => ganti(-1)}
-                  className="flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2.5 text-left text-[13px] font-bold transition-colors hover:border-navy"
+                  className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5 text-left text-[13px] font-bold transition-colors hover:border-ink"
                 >
                   <ArrowLeft aria-hidden className="size-4 shrink-0" />
                   <span className="truncate">{prev.short}</span>
@@ -272,7 +272,7 @@ export default function CourseDetail({ matkul, covers, initialIndex, origin, get
                 <button
                   type="button"
                   onClick={() => ganti(1)}
-                  className="flex items-center justify-end gap-2 rounded-xl border border-border bg-white px-3 py-2.5 text-right text-[13px] font-bold transition-colors hover:border-navy"
+                  className="flex items-center justify-end gap-2 rounded-xl border border-border bg-surface px-3 py-2.5 text-right text-[13px] font-bold transition-colors hover:border-ink"
                 >
                   <span className="truncate">{next.short}</span>
                   <ArrowRight aria-hidden className="size-4 shrink-0" />
@@ -297,7 +297,7 @@ export default function CourseDetail({ matkul, covers, initialIndex, origin, get
                 </Link>
                 <Link
                   href={`/matkul/${c.id}?tab=nilai`}
-                  className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-border bg-white px-5 py-3 text-[15px] font-bold text-navy transition-colors hover:border-navy"
+                  className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-border bg-surface px-5 py-3 text-[15px] font-bold text-ink transition-colors hover:border-ink"
                 >
                   <Calculator aria-hidden className="size-4" /> Isi nilai
                 </Link>
@@ -336,12 +336,12 @@ export default function CourseDetail({ matkul, covers, initialIndex, origin, get
                 />
               </div>
 
-              <div className="mt-3 rounded-2xl border border-border bg-white p-5 shadow-sm" data-rise>
+              <div className="mt-3 rounded-2xl border border-border bg-surface p-5 shadow-sm" data-rise>
                 <Progress value={pro.pct} label={`Pemahaman materi · ${pro.paham}/${pro.total} topik paham`} barClassName="bg-c" />
                 {pro.total - pro.paham > 0 && (
                   <p className="mt-2 text-[13px] text-muted">
                     {pro.proses} sedang dipelajari · {c.topikBerat} topik berbobot berat.{' '}
-                    <Link href={`/matkul/${c.id}?tab=materi`} className="font-bold text-navy underline-offset-4 hover:underline">
+                    <Link href={`/matkul/${c.id}?tab=materi`} className="font-bold text-ink underline-offset-4 hover:underline">
                       Lanjutkan materi →
                     </Link>
                   </p>
@@ -362,7 +362,7 @@ export default function CourseDetail({ matkul, covers, initialIndex, origin, get
                   <li key={p.tab}>
                     <Link
                       href={`/matkul/${c.id}?tab=${p.tab}`}
-                      className="group flex h-full flex-col gap-2 rounded-2xl border border-border bg-white p-4 shadow-xs transition-all duration-base ease-out-expo hover:-translate-y-0.5 hover:shadow-lg active:scale-[.98]"
+                      className="group flex h-full flex-col gap-2 rounded-2xl border border-border bg-surface p-4 shadow-xs transition-all duration-base ease-out-expo hover:-translate-y-0.5 hover:shadow-lg active:scale-[.98]"
                     >
                       <span className="flex items-start justify-between">
                         <span className="flex size-10 items-center justify-center rounded-lg transition-colors" style={{ background: c.pale, color: c.accent }}>
@@ -377,7 +377,7 @@ export default function CourseDetail({ matkul, covers, initialIndex, origin, get
                 ))}
               </ul>
 
-              <div className="mt-8 rounded-2xl border border-border bg-white p-5" data-rise>
+              <div className="mt-8 rounded-2xl border border-border bg-surface p-5" data-rise>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted">Jadwal tetap</p>
                 <ul className="mt-3 divide-y divide-divider">
                   {c.jadwal.map((s, i) => (
@@ -412,7 +412,7 @@ export default function CourseDetail({ matkul, covers, initialIndex, origin, get
         onClick={() => void close()}
         aria-label="Tutup dan kembali ke orbit"
         data-hover
-        className="fixed bottom-24 right-5 z-[46] flex size-12 items-center justify-center rounded-full border border-glass-border bg-glass-strong text-navy shadow-glass-soft backdrop-blur-glass transition-transform duration-base ease-out-expo hover:scale-105 lg:bottom-auto lg:right-[58px] lg:top-24"
+        className="fixed bottom-24 right-5 z-[46] flex size-12 items-center justify-center rounded-full border border-glass-border bg-glass-strong text-ink shadow-glass-soft backdrop-blur-glass transition-transform duration-base ease-out-expo hover:scale-105 lg:bottom-auto lg:right-[58px] lg:top-24"
       >
         <X aria-hidden className="size-5" />
       </button>
@@ -438,7 +438,7 @@ function Judul({ c }: { c: KartuMatkul }) {
 
 function Info({ Icon, label, nilai, ket, clamp }: { Icon: LucideIcon; label: string; nilai: string; ket: string; clamp?: boolean }) {
   return (
-    <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
       <p className="flex items-center gap-2 text-[12.5px] font-bold text-muted">
         <Icon aria-hidden className="size-4 text-c" /> {label}
       </p>
@@ -450,7 +450,7 @@ function Info({ Icon, label, nilai, ket, clamp }: { Icon: LucideIcon; label: str
 
 function Minggu({ judul, m, kuat }: { judul: string; m: MingguRingkas | null; kuat?: boolean }) {
   return (
-    <div className={cn('rounded-2xl border p-5', kuat ? 'border-transparent bg-navy text-white shadow-lg' : 'border-border bg-white')}>
+    <div className={cn('rounded-2xl border p-5', kuat ? 'border-transparent bg-navy text-white shadow-lg' : 'border-border bg-surface')}>
       <div className="flex items-baseline justify-between gap-3">
         <p className={cn('text-xs font-bold uppercase tracking-[0.2em]', kuat ? 'text-pink-light' : 'text-muted')}>{judul}</p>
         {m && <p className={cn('num text-[12.5px] font-semibold', kuat ? 'text-white/60' : 'text-muted')}>{m.range}</p>}

@@ -38,16 +38,16 @@ void main() {
   vec2 uv = vec2(vUv.x, 1.0 - vUv.y); // origin kiri-atas, seperti CSS
   float t = uTime * 0.12;
 
-  vec3 c = vec3(1.0);
+  vec3 c = vec3(0.02, 0.024, 0.05); // langit malam
   vec2 o1 = vec2(sin(t * 1.0), cos(t * 1.3)) * 0.05;
   vec2 o2 = vec2(cos(t * 1.1 + 1.0), sin(t * 0.9)) * 0.05;
   vec2 o3 = vec2(sin(t * 0.8 + 2.0), cos(t * 1.2 + 0.5)) * 0.07;
   vec2 o4 = vec2(cos(t * 1.4 + 3.0), sin(t * 1.0 + 1.5)) * 0.06;
 
-  c = layer(c, uBlueSoft, blob(uv, vec2(0.30, 0.70) + o4, vec2(0.30, 0.36)) * 0.45);
-  c = layer(c, uPink,     blob(uv, vec2(0.50, 0.48) + o3, vec2(0.46, 0.50)) * 0.38);
-  c = layer(c, uPinkLight,blob(uv, vec2(0.86, 0.10) + o2, vec2(0.38, 0.46)) * 0.85);
-  c = layer(c, uBlue,     blob(uv, vec2(0.14, 0.20) + o1, vec2(0.42, 0.50)) * 0.50);
+  c = layer(c, uBlueSoft, blob(uv, vec2(0.30, 0.70) + o4, vec2(0.30, 0.36)) * 0.16);
+  c = layer(c, uPink,     blob(uv, vec2(0.50, 0.48) + o3, vec2(0.46, 0.50)) * 0.2);
+  c = layer(c, uPinkLight,blob(uv, vec2(0.86, 0.10) + o2, vec2(0.38, 0.46)) * 0.32);
+  c = layer(c, uBlue,     blob(uv, vec2(0.14, 0.20) + o1, vec2(0.42, 0.50)) * 0.42);
 
   gl_FragColor = vec4(c, 1.0);
 }
@@ -94,7 +94,7 @@ export default function MeshGradient({ className, speed = 1 }: MeshGradientProps
       uniforms: {
         uTime: { value: 0 },
         uBlue: { value: new Color("#475CA3") },
-        uPinkLight: { value: new Color("#FFCED8") },
+        uPinkLight: { value: new Color("#6b3fb0") },
         uPink: { value: new Color("#D64C6F") },
         uBlueSoft: { value: new Color("#9CB3D3") },
       },

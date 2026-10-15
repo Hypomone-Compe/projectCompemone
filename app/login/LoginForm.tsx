@@ -86,7 +86,7 @@ export default function LoginForm() {
               type="button"
               onClick={() => setShow(v => !v)}
               aria-label={show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-              className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted hover:bg-navy-5 hover:text-navy"
+              className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted hover:bg-navy-5 hover:text-ink"
             >
               {show ? <EyeOff aria-hidden className="size-[18px]" /> : <Eye aria-hidden className="size-[18px]" />}
             </button>

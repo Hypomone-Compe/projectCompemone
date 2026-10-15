@@ -8,10 +8,10 @@ const cardVariants = cva(
     variants: {
       variant: {
         default:
-          "border border-border bg-white shadow-sm hover:-translate-y-1 hover:shadow-lg",
+          "border border-border bg-surface shadow-sm hover:-translate-y-1 hover:shadow-lg",
         feature:
-          "border border-border bg-white shadow-lg hover:-translate-y-1 hover:shadow-xl",
-        flat: "border border-border bg-white shadow-none hover:shadow-sm",
+          "border border-border bg-surface shadow-lg hover:-translate-y-1 hover:shadow-xl",
+        flat: "border border-border bg-surface shadow-none hover:shadow-sm",
         // Glass: HANYA di atas area berwarna (mesh/hero/spotlight), jangan di putih polos.
         glass:
           "border border-glass-border bg-glass-strong shadow-glass-soft backdrop-blur-glass-lg hover:-translate-y-1 hover:shadow-[0_0_0_1px_rgba(255,255,255,.55),0_28px_52px_rgba(11,16,45,.18),inset_0_1px_0_rgba(255,255,255,.8)]",

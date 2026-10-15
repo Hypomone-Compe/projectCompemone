@@ -40,24 +40,6 @@ three.js · GSAP · Lenis · ogl · Supabase · Resend · Tesseract.js · Claude
    `https://<domainmu>/auth/callback` ke **Redirect URLs** (untuk masuk lewat tautan email).
 6. **Project Settings → API**: salin URL, anon key, dan service_role key.
 
-### 2. Vercel
-
-Import repo ini, lalu isi Environment Variables (lihat [`.env.example`](.env.example)):
-
-| Nama | Wajib | Isi |
-|---|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | ya | URL proyek Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ya | anon / publishable key |
-| `SUPABASE_SERVICE_ROLE_KEY` | untuk email | service role key (rahasia) |
-| `NEXT_PUBLIC_ALLOWED_EMAIL` | – | default `lvnasandbox@gmail.com` |
-| `RESEND_API_KEY` | untuk email | dari resend.com |
-| `NOTIFY_FROM` | – | `Hypomone <onboarding@resend.dev>` |
-| `CRON_SECRET` | untuk email | string acak |
-| `ANTHROPIC_API_KEY` | – | OCR struk lebih akurat dengan Claude |
-| `NEXT_PUBLIC_SITE_URL` | – | URL Vercel |
-
-`vercel.json` mendaftarkan satu cron `0 23 * * *` (= 06.00 WIB) yang kini mengirim **setiap hari**.
-
 ### 3. Pindahkan data dari Sandbox lama
 
 Di Sandbox: footer → **Unduh cadangan** (`sandbox-YYYY-MM-DD.json`). Di Hypomonē: footer → **Impor data**,

@@ -19,10 +19,10 @@ const SECTIONS: NavSection[] = [
 
 /* Biru design system untuk halaman harian: jauh dari hijau keuangan dan
    dari warna lima matkul, jadi tangkapan layar mana pun langsung ketahuan asalnya. */
-const ACCENT = '#475ca3';
+const ACCENT = '#8297f0';
 
 export default function HarianPage() {
-  const vars = { '--c': ACCENT, '--c-on': '#ffffff', '--c-pale': '#eef1f9', '--c-emph': ACCENT } as CSSProperties;
+  const vars = { '--c': ACCENT, '--c-on': '#ffffff', '--c-pale': 'rgba(130, 151, 240, 0.15)', '--c-emph': ACCENT } as CSSProperties;
 
   return (
     <div style={vars}>

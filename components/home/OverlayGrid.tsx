@@ -6,7 +6,7 @@ import * as React from 'react';
  * Grid silinder WebGL di belakang panel (port BackgroundGrid design system):
  * garis navy 16%, radius 30, bergeser pelan mengikuti gulir panel lalu di-wrap.
  */
-export default function OverlayGrid({ scroller, opacity = 0.16 }: { scroller: React.RefObject<HTMLElement | null>; opacity?: number }) {
+export default function OverlayGrid({ scroller, opacity = 0.07 }: { scroller: React.RefObject<HTMLElement | null>; opacity?: number }) {
   const ref = React.useRef<HTMLCanvasElement>(null);
 
   React.useEffect(() => {
@@ -33,7 +33,7 @@ export default function OverlayGrid({ scroller, opacity = 0.16 }: { scroller: Re
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(52, w() / Math.max(h(), 1), 0.1, 300);
       camera.position.set(0, 0, 10);
-      const material = new THREE.LineBasicMaterial({ color: 0x0b102d, transparent: true, opacity, depthWrite: false });
+      const material = new THREE.LineBasicMaterial({ color: 0xb8c2ff, transparent: true, opacity, depthWrite: false });
 
       let lines: InstanceType<typeof THREE.LineSegments> | null = null;
       let period = 2;

@@ -45,7 +45,7 @@ export function Dropdown({ trigger, children, align = "left", className }: Dropd
 /** Panel menu (bisa dipakai tanpa trigger untuk demo / statis). */
 export function DropdownMenu({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div role="menu" className={cn("w-[230px] rounded-lg border border-border bg-white p-2 shadow-lg", className)} {...props} />
+    <div role="menu" className={cn("w-[230px] rounded-lg border border-border bg-surface p-2 shadow-lg", className)} {...props} />
   );
 }
 
@@ -61,7 +61,7 @@ export function DropdownItem({ icon, danger, className, children, ...props }: Dr
       role="menuitem"
       className={cn(
         "flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-left text-sm font-semibold transition-colors [&_svg]:size-4",
-        danger ? "text-red hover:bg-red-pale" : "text-secondary hover:bg-navy-5 hover:text-navy",
+        danger ? "text-red hover:bg-red-pale" : "text-secondary hover:bg-navy-5 hover:text-ink",
         className
       )}
       {...props}

@@ -410,7 +410,7 @@ export function renderDigestHtml(d: Digest): string {
   <!-- kepala gelap -->
   <tr><td style="background:${INK};padding:26px 26px 30px;border-radius:0 0 20px 20px;">
     <table role="presentation" width="100%"><tr>
-      <td style="font:800 17px/1 ${SANS};letter-spacing:-.03em;color:${WHITE};">Hypomon&#275; <span style="color:${LIME};">@GRIT</span></td>
+      <td style="font:800 17px/1 ${SANS};letter-spacing:-.03em;color:${WHITE};">Hypomon&#275; <span style="color:${LIME};">@LV</span></td>
       <td align="right">${eyebrow('Gasal 26 / 27', '#93938a')}</td>
     </tr></table>
 
@@ -492,7 +492,7 @@ export function renderDigestHtml(d: Digest): string {
 
   <tr><td style="padding:26px 4px 0;">
     <p style="margin:0;padding-top:16px;border-top:1px solid ${RULE};font:400 11px/1.7 ${SANS};color:${MUTE};">
-      Dikirim otomatis setiap pagi dari Hypomonē @GRIT, situs monitoring pribadimu. Agenda disusun dari BRP tiap mata kuliah, 
+      Dikirim otomatis setiap pagi dari Hypomonē @LV, situs monitoring pribadimu. Agenda disusun dari BRP tiap mata kuliah, 
       selalu verifikasi ke SCeLE dan pengumuman dosen sebelum bergantung padanya.
     </p>
   </td></tr>
@@ -501,7 +501,7 @@ export function renderDigestHtml(d: Digest): string {
 }
 
 export function renderDigestText(d: Digest): string {
-  const L: string[] = ['HYPOMONĒ @GRIT, Gasal 2026/2027', fmtDateLong(d.today), '', d.headline.toUpperCase()];
+  const L: string[] = ['HYPOMONĒ @LV, Gasal 2026/2027', fmtDateLong(d.today), '', d.headline.toUpperCase()];
 
   if (d.sesiHariIni.length) {
     L.push('', `HARI INI, ${d.hari.toUpperCase()}`);

@@ -35,7 +35,7 @@ export default function HariIni({
   scele: string;
 }) {
   return (
-    <section id="hari-ini" aria-labelledby="hari-ini-judul" className="scroll-mt-24 bg-white py-14 sm:py-20">
+    <section id="hari-ini" aria-labelledby="hari-ini-judul" className="scroll-mt-24 bg-surface py-14 sm:py-20">
       <div className="mx-auto max-w-wrap px-5">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Hari ini · {hari}</p>
         <h2 id="hari-ini-judul" className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">
@@ -57,7 +57,7 @@ export default function HariIni({
             <li key={a.href} className="shrink-0">
               <Link
                 href={a.href}
-                className="flex items-center gap-3 rounded-2xl border border-border bg-white py-3 pl-3 pr-5 shadow-xs transition-all duration-base ease-out-expo hover:-translate-y-0.5 hover:shadow-md active:scale-[.98]"
+                className="flex items-center gap-3 rounded-2xl border border-border bg-surface py-3 pl-3 pr-5 shadow-xs transition-all duration-base ease-out-expo hover:-translate-y-0.5 hover:shadow-md active:scale-[.98]"
               >
                 <span className="flex size-10 items-center justify-center rounded-lg bg-pink-pale text-accent-hover">
                   <a.Icon aria-hidden className="size-5" />
@@ -74,7 +74,7 @@ export default function HariIni({
               href={scele}
               target="_blank"
               rel="noreferrer"
-              className="flex h-full items-center gap-2 rounded-2xl border-[1.5px] border-dashed border-border px-5 text-[14.5px] font-bold text-secondary transition-colors hover:border-navy hover:text-navy"
+              className="flex h-full items-center gap-2 rounded-2xl border-[1.5px] border-dashed border-border px-5 text-[14.5px] font-bold text-secondary transition-colors hover:border-ink hover:text-ink"
             >
               SCeLE <ExternalLink aria-hidden className="size-4" />
             </a>
@@ -83,7 +83,7 @@ export default function HariIni({
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[1.25fr_1fr]">
           {/* Jadwal hari ini */}
-          <div className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+          <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6">
             <p className="text-[13px] font-bold text-muted">Jadwal kuliah</p>
             {sesi.length === 0 ? (
               <p className="mt-4 rounded-xl bg-off-white px-4 py-6 text-center text-sm text-muted">
@@ -97,7 +97,7 @@ export default function HariIni({
                       href={`/matkul/${s.cid}`}
                       className={cn(
                         'flex items-center gap-4 rounded-xl border p-3.5 transition-all hover:shadow-md',
-                        s.status === 'berlangsung' ? 'border-transparent bg-navy text-white shadow-lg' : 'border-border bg-white',
+                        s.status === 'berlangsung' ? 'border-transparent bg-navy text-white shadow-lg' : 'border-border bg-surface',
                         s.status === 'selesai' && 'opacity-55',
                       )}
                     >
@@ -120,7 +120,7 @@ export default function HariIni({
                       <span
                         className={cn(
                           'shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-bold',
-                          s.status === 'berlangsung' ? 'bg-pink-light text-maroon' : s.status === 'selesai' ? 'bg-navy-5 text-muted' : 'bg-blue-pale text-blue',
+                          s.status === 'berlangsung' ? 'bg-accent text-white' : s.status === 'selesai' ? 'bg-navy-5 text-muted' : 'bg-blue-pale text-blue',
                         )}
                       >
                         {s.status === 'berlangsung' ? 'Sekarang' : s.status === 'selesai' ? 'Selesai' : 'Nanti'}
@@ -146,7 +146,7 @@ export default function HariIni({
                 {agenda.slice(0, 7).map((d, i) => (
                   <li key={i}>
                     <Link href={`/matkul/${d.cid}?tab=rencana`} className="group flex gap-3 text-[13.5px] leading-snug">
-                      <span className="mt-0.5 w-14 shrink-0 rounded-full bg-white px-2 py-0.5 text-center text-[11px] font-extrabold" style={{ color: d.accent }}>
+                      <span className="mt-0.5 w-14 shrink-0 rounded-full bg-surface px-2 py-0.5 text-center text-[11px] font-extrabold" style={{ color: d.accent }}>
                         {d.short}
                       </span>
                       <span className="text-white/85 group-hover:text-white group-hover:underline">{d.text}</span>

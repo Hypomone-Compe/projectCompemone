@@ -17,7 +17,7 @@ const SECTIONS: NavSection[] = [
 ];
 
 export default function AsdosPage() {
-  const vars = { '--c': KELAS.accent, '--c-on': KELAS.accentOn, '--c-pale': '#eef1f9', '--c-emph': KELAS.accent } as CSSProperties;
+  const vars = { '--c': KELAS.accent, '--c-on': KELAS.accentOn, '--c-pale': 'rgba(130, 151, 240, 0.15)', '--c-emph': KELAS.accent } as CSSProperties;
 
   return (
     <div style={vars}>

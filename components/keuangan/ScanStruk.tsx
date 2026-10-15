@@ -186,7 +186,7 @@ export default function ScanStruk({ open, onClose }: { open: boolean; onClose: (
       ref={ref}
       onClose={tutup}
       aria-label="Scan struk"
-      className="m-auto max-h-[92dvh] w-[calc(100%-24px)] max-w-[560px] overflow-y-auto rounded-2xl border-0 bg-white p-0 text-navy shadow-xl backdrop:bg-navy/40 backdrop:backdrop-blur-sm"
+      className="m-auto max-h-[92dvh] w-[calc(100%-24px)] max-w-[560px] overflow-y-auto rounded-2xl border-0 bg-surface p-0 text-ink shadow-xl backdrop:bg-black/60 backdrop:backdrop-blur-sm"
     >
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-divider bg-white/90 px-5 py-4 backdrop-blur">
         <div className="flex items-center gap-3">
@@ -231,7 +231,7 @@ export default function ScanStruk({ open, onClose }: { open: boolean; onClose: (
                 seret ? 'border-accent bg-pink-pale' : 'border-border bg-off-white',
               )}
             >
-              <span className="flex size-16 items-center justify-center rounded-full bg-white text-accent shadow-sm">
+              <span className="flex size-16 items-center justify-center rounded-full bg-surface text-accent shadow-sm">
                 <Camera aria-hidden className="size-7" />
               </span>
               <div>
@@ -319,7 +319,7 @@ export default function ScanStruk({ open, onClose }: { open: boolean; onClose: (
                 </p>
                 {hasil && hasil.items.length > 0 && (
                   <details className="mt-2 text-[13px]">
-                    <summary className="font-bold text-navy">{hasil.items.length} item terbaca</summary>
+                    <summary className="font-bold text-ink">{hasil.items.length} item terbaca</summary>
                     <ul className="mt-1.5 space-y-0.5 text-secondary">
                       {hasil.items.map((it, i) => (
                         <li key={i} className="flex justify-between gap-3">

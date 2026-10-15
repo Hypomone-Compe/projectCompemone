@@ -50,7 +50,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { LOGO_SHAPES, LOGO_SIZE } from "./logo-shapes";
+import { createGalaxy, createStarfield } from "./galaxy";
 
 export type Rect = { left: number; top: number; width: number; height: number };
 /** 4 sudut kartu di layar (px), urutan gambar: kiri-atas, kanan-atas, kanan-bawah, kiri-bawah. */
@@ -64,8 +64,6 @@ export interface OrbitOptions {
   /** Pemetaan instance kartu → index item. Panjangnya = jumlah kartu. */
   slots: number[];
   perRing: number;
-  logoSrc: string;
-  logoBumpSrc: string;
   reduceMotion: boolean;
   /** Kecepatan putar otomatis (derajat/detik). */
   autoSpeed?: number;
@@ -90,8 +88,9 @@ export interface OrbitController {
 }
 
 const RAD = Math.PI / 180;
-const BG = 0xffffff;
-const NAVY = 0x0b102d;
+const BG = 0x05060d;
+/** Garis grid: nila pucat yang sangat tipis, seperti dinding hologram di ruang gelap. */
+const NAVY = 0xb8c2ff;
 // Ala k95: kamera tepat di depan dinding cincin → perspektif kuat (kartu belakang kecil, kartu
 // dekat besar & terpotong di tepi layar). Kartu menghadap ke dalam (ke logo), potret 1.4:1.9.
 const RADIUS = 6;
@@ -193,7 +192,7 @@ async function buildAtlas(urls: string[]) {
   imgs.forEach((img, i) => {
     const cx = (i % cols) * cw;
     const cy = Math.floor(i / cols) * ch;
-    g.fillStyle = "#f0f0f4";
+    g.fillStyle = "#0d1022";
     g.fillRect(cx, cy, cw, ch);
     if (img) {
       const s = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
@@ -248,11 +247,7 @@ export async function createOrbit(opts: OrbitOptions): Promise<OrbitController> 
   const rings = Math.ceil(N / perRing);
   const STEP = 360 / perRing;
 
-  const [logoImg, bumpImg, atlas] = await Promise.all([
-    loadImage(opts.logoSrc),
-    loadImage(opts.logoBumpSrc),
-    buildAtlas(opts.images),
-  ]);
+  const atlas = await buildAtlas(opts.images);
 
   const dpr = window.devicePixelRatio || 1;
   const renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
@@ -274,10 +269,12 @@ export async function createOrbit(opts: OrbitOptions): Promise<OrbitController> 
   const gridScene = new Scene();
   const gridCamera = new PerspectiveCamera(52, 1, 0.1, 300);
   gridCamera.position.set(0, 0, 10);
-  const gridMat = new LineBasicMaterial({ color: NAVY, transparent: true, opacity: 0.16, depthWrite: false, toneMapped: false });
+  const gridMat = new LineBasicMaterial({ color: NAVY, transparent: true, opacity: 0.065, depthWrite: false, toneMapped: false });
   let grid = createGrid(false);
   let gridLines = new LineSegments(grid.geo, gridMat);
   gridScene.add(gridLines);
+  const stars = createStarfield();
+  gridScene.add(stars.points);
   disposables.push(gridMat);
   let gridTall = false;
   let gridPos = 0;
@@ -297,116 +294,9 @@ export async function createOrbit(opts: OrbitOptions): Promise<OrbitController> 
     return d;
   };
 
-  /* ---------- environment pantulan logo (dibuat sekali) ---------- */
-  {
-    const envScene = new Scene();
-    const sg = new SphereGeometry(40, 32, 16);
-    const pos = sg.attributes.position;
-    const cols: number[] = [];
-    const top = new Color(0.85, 0.88, 1.0);
-    const mid = new Color(1.0, 0.75, 0.82);
-    const bot = new Color(0.55, 0.6, 0.85);
-    for (let i = 0; i < pos.count; i++) {
-      const y = pos.getY(i) / 40;
-      const c = new Color();
-      if (y > 0) c.copy(mid).lerp(top, Math.pow(y, 0.6));
-      else c.copy(mid).lerp(bot, Math.pow(-y, 0.5));
-      cols.push(c.r * 0.55, c.g * 0.55, c.b * 0.6);
-    }
-    sg.setAttribute("color", new Float32BufferAttribute(cols, 3));
-    const sm = new MeshBasicMaterial({ vertexColors: true, side: BackSide });
-    envScene.add(new Mesh(sg, sm));
-    const tmp: Array<{ dispose(): void }> = [sg, sm];
-    const panel = (w: number, h: number, x: number, y: number, z: number, k: number) => {
-      const pg = new PlaneGeometry(w, h);
-      const pm = new MeshBasicMaterial({ color: new Color(k, k, k), side: DoubleSide });
-      const m = new Mesh(pg, pm);
-      m.position.set(x, y, z);
-      m.lookAt(0, 0, 0);
-      envScene.add(m);
-      tmp.push(pg, pm);
-    };
-    panel(26, 10, -14, 18, 14, 7);
-    panel(5, 30, 24, 2, 8, 6);
-    panel(5, 30, -26, 0, -6, 4);
-    panel(30, 6, 0, -14, 18, 3);
-    panel(18, 18, 0, 6, -28, 3);
-    const pmrem = new PMREMGenerator(renderer);
-    const envRT = pmrem.fromScene(envScene, 0.02);
-    scene.environment = envRT.texture;
-    pmrem.dispose();
-    tmp.forEach((d) => d.dispose());
-    disposables.push(envRT);
-  }
-  const key = new DirectionalLight(0xffffff, 0.9 * Math.PI);
-  key.position.set(-3, 5, 6);
-  scene.add(key);
-  const back = new DirectionalLight(0xffd6e0, 0.8 * Math.PI);
-  back.position.set(3, 2, -6);
-  scene.add(back);
-
-  /* ---------- logo 3D (ekstrusi siluet) ---------- */
-  const S = LOGO_SIZE;
-  const K = 3.0 / S;
-  const shapeFrom = (pts: [number, number][]) => {
-    const sh = new Shape();
-    pts.forEach(([x, y], i) => (i ? sh.lineTo(x, S - y) : sh.moveTo(x, S - y)));
-    sh.closePath();
-    return sh;
-  };
-  const center = (pts: [number, number][]) => {
-    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
-    for (const [x, yy] of pts) {
-      const y = S - yy;
-      x0 = Math.min(x0, x); x1 = Math.max(x1, x);
-      y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-    }
-    return { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2 };
-  };
-  const part = (pts: [number, number][], o: { depth: number; bt: number; bs: number }) => {
-    const geo = new ExtrudeGeometry(shapeFrom(pts), {
-      depth: o.depth, bevelEnabled: true, bevelThickness: o.bt, bevelSize: o.bs, bevelOffset: -o.bs,
-      bevelSegments: 5, curveSegments: 1, steps: 1,
-    });
-    const pa = geo.attributes.position;
-    const uv = geo.attributes.uv;
-    for (let i = 0; i < pa.count; i++) uv.setXY(i, pa.getX(i) / S, pa.getY(i) / S);
-    const c = center(pts);
-    geo.translate(-c.cx, -c.cy, -o.depth / 2);
-    geo.scale(K, K, K);
-    disposables.push(geo);
-    return { geo, ...c };
-  };
-
-  const logoTex = new Texture(logoImg);
-  logoTex.colorSpace = SRGBColorSpace;
-  logoTex.anisotropy = maxAniso;
-  logoTex.needsUpdate = true;
-  const bumpTex = new Texture(bumpImg);
-  bumpTex.anisotropy = maxAniso;
-  bumpTex.needsUpdate = true;
-  const faceMat = new MeshPhysicalMaterial({
-    map: logoTex, bumpMap: bumpTex, bumpScale: FACE_BUMP, roughness: 0.42, metalness: 0,
-    clearcoat: 1, clearcoatRoughness: 0.12, envMapIntensity: 0.7,
-  });
-  const sideMat = new MeshPhysicalMaterial({
-    color: new Color(0xff8fab), roughness: 0.28, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.1, envMapIntensity: 0.75,
-  });
-  const logoMats = [faceMat, sideMat];
-  disposables.push(logoTex, bumpTex, faceMat, sideMat);
-
-  const logo = new Group();
-  scene.add(logo);
-  const mainShape = LOGO_SHAPES.find((s) => s.kind === "main")!;
-  const body = part(mainShape.pts, { depth: 64, bt: 24, bs: 15 });
-  logo.add(new Mesh(body.geo, logoMats));
-  LOGO_SHAPES.filter((s) => s.kind === "orb").forEach((s) => {
-    const p = part(s.pts, { depth: 22, bt: 18, bs: 5 });
-    const m = new Mesh(p.geo, logoMats);
-    m.position.set((p.cx - body.cx) * K, (p.cy - body.cy) * K, 0.26);
-    logo.add(m);
-  });
-  logo.scale.setScalar(LOGO_SCALE);
+  /* ---------- galaksi Andromeda di tengah (pengganti logo) ---------- */
+  const galaxy = createGalaxy({ radius: 1.9 * LOGO_SCALE, pixelRatio: renderer.getPixelRatio() });
+  scene.add(galaxy.group);
 
   /* ---------- kartu: 1 InstancedMesh + atlas ---------- */
   const atlasTex = new CanvasTexture(atlas.canvas);
@@ -457,7 +347,7 @@ export async function createOrbit(opts: OrbitOptions): Promise<OrbitController> 
   const ndc = new Vector2();
   const m4 = new Matrix4();
   const v3 = new Vector3();
-  const pickTargets = [...logo.children, cards];
+  const pickTargets = [galaxy.pick, cards];
 
   /* ---------- ukuran ---------- */
   const resize = () => {
@@ -583,7 +473,8 @@ export async function createOrbit(opts: OrbitOptions): Promise<OrbitController> 
     travel += (travelTarget - travel) * (reduceMotion ? 1 : 0.05);
     layout();
     // logo hanya berputar, tidak mengikuti kursor
-    logo.rotation.y = reduceMotion ? 0.6 : t * 0.3;
+    galaxy.update(t, reduceMotion);
+    stars.uniforms.uTime.value = t;
     draw();
     updateHover();
     raf = requestAnimationFrame(frame);
@@ -720,6 +611,8 @@ export async function createOrbit(opts: OrbitOptions): Promise<OrbitController> 
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("pointermove", onPointer);
       grid.geo.dispose();
+      galaxy.dispose();
+      stars.dispose();
       disposables.forEach((d) => d.dispose());
       renderer.dispose();
     },

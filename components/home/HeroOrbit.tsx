@@ -2,10 +2,12 @@
 
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown } from 'lucide-react';
 import { bukaSapaan } from '@/components/Sapaan';
-import { sampulMatkul } from '@/lib/kartu';
+import { sampulOrbit, type ItemOrbit } from '@/lib/kartu';
+import { ITEM_GANDA } from '@/lib/orbit';
 import type { KartuMatkul } from '@/lib/ringkasan-matkul';
 import { scrollKe } from '@/lib/scroll';
 import { cn } from '@/lib/utils';
@@ -14,10 +16,11 @@ import type { OrbitController, Quad } from './orbit/scene';
 const loadDetail = () => import('./CourseDetail');
 const CourseDetail = dynamic(() => loadDetail().then(m => m.default), { ssr: false });
 
-/* Pengaturan orbit, sama dengan HERO di design system: 4 baris × 5 kartu. */
+/* 4 baris × 4 kartu = 16 slot untuk 13 item: tiap item tampil sekali,
+   hanya SDA, PBP, dan Keuangan yang muncul dua kali. */
 const HERO = {
   rings: 4,
-  cardsPerRing: 5,
+  cardsPerRing: 4,
   autoSpeed: 3,
   /** Putaran tambahan dari scroll selama hero ditahan. */
   maxRotations: 1,
@@ -33,15 +36,17 @@ export interface HeroInfo {
 }
 
 /**
- * Hero beranda ala design system (k95.it): logo BEM 3D di tengah, dibungkus
- * kartu lima mata kuliah yang berputar di atas latar putih + grid silinder.
- * Klik kartu → panel matkul yang fungsional (CourseDetail). Klik logo → sapaan hari ini.
+ * Hero beranda ala design system (k95.it), tema luar angkasa: galaksi Andromeda 3D
+ * di tengah, dibungkus kartu matkul, halaman, dan tautan yang berputar di atas grid.
+ * Klik kartu matkul → panel matkul (CourseDetail); kartu lain → langsung ke tujuannya.
+ * Klik galaksi → sapaan hari ini (bersama maskot kucing).
  *
  * Bedanya dengan referensi: ada bilah bawah yang SELALU terlihat berisi lima
  * tombol matkul dan tombol ke agenda. Kartu yang berputar itu cantik, tapi
  * bukan cara tercepat membuka SDA jam tujuh pagi.
  */
-export default function HeroOrbit({ matkul, info }: { matkul: KartuMatkul[]; info: HeroInfo }) {
+export default function HeroOrbit({ matkul, items, info }: { matkul: KartuMatkul[]; items: ItemOrbit[]; info: HeroInfo }) {
+  const router = useRouter();
   const wrapRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const labelRef = useRef<HTMLDivElement>(null);
@@ -54,20 +59,35 @@ export default function HeroOrbit({ matkul, info }: { matkul: KartuMatkul[]; inf
   const [hover, setHover] = useState<number | 'logo' | null>(null);
   const [detail, setDetail] = useState<{ index: number; origin: Quad | null } | null>(null);
 
+  /* Slot → indeks item. Semua item sekali, sisa slot diisi ITEM_GANDA, lalu
+     diacak dengan langkah koprima supaya kartu yang sama tidak bertetangga. */
   const slots = useMemo(() => {
-    const n = matkul.length;
-    const step = [7, 3, 11, 13].find(s => gcd(s, n) === 1) ?? 1;
-    return Array.from({ length: TOTAL_SLOTS }, (_, i) => (i * step) % n);
-  }, [matkul.length]);
+    const list = items.map((_, i) => i);
+    for (const id of ITEM_GANDA) {
+      if (list.length >= TOTAL_SLOTS) break;
+      const i = items.findIndex(x => x.id === id);
+      if (i >= 0) list.push(i);
+    }
+    while (list.length < TOTAL_SLOTS) list.push(list.length % items.length);
+    const L = list.slice(0, TOTAL_SLOTS);
+    const step = [5, 7, 3, 11].find(st => gcd(st, L.length) === 1) ?? 1;
+    return L.map((_, i) => L[(i * step) % L.length]);
+  }, [items]);
+
+  /* Sampul per matkul (urutan matkul) untuk panel detail. */
+  const coverMatkul = useMemo(
+    () => matkul.map((_, i) => covers[items.findIndex(x => x.matkul === i)] ?? ''),
+    [matkul, items, covers],
+  );
 
   /* Sampul digambar dulu (canvas), lalu scene WebGL dimuat di chunk terpisah. */
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || matkul.length === 0) return;
+    if (!canvas || items.length === 0) return;
     let disposed = false;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    sampulMatkul(matkul)
+    sampulOrbit(items)
       .then(urls => {
         if (disposed) throw new Error('batal');
         setCovers(urls);
@@ -77,8 +97,6 @@ export default function HeroOrbit({ matkul, info }: { matkul: KartuMatkul[]; inf
             images: urls,
             slots,
             perRing: HERO.cardsPerRing,
-            logoSrc: '/images/logo-bem-ui.png',
-            logoBumpSrc: '/images/logo-bem-ui-height.png',
             autoSpeed: HERO.autoSpeed,
             reduceMotion,
             onHover: setHover,
@@ -100,7 +118,7 @@ export default function HeroOrbit({ matkul, info }: { matkul: KartuMatkul[]; inf
       ctrlRef.current?.dispose();
       ctrlRef.current = null;
     };
-  }, [matkul, slots]);
+  }, [items, slots]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -175,10 +193,15 @@ export default function HeroOrbit({ matkul, info }: { matkul: KartuMatkul[]; inf
     const ctrl = ctrlRef.current;
     const hit = ctrl?.pick(e.clientX, e.clientY);
     if (!ctrl || !hit) return;
-    if (hit.kind === 'logo') bukaSapaan();
-    else {
+    if (hit.kind === 'logo') return bukaSapaan();
+    const it = items[slots[hit.instance]];
+    if (it.jenis === 'matkul' && it.matkul != null) {
       ctrl.setHidden(hit.instance);
-      openItem(slots[hit.instance], ctrl.quadOf(hit.instance));
+      openItem(it.matkul, ctrl.quadOf(hit.instance));
+    } else if (it.jenis === 'luar' && it.href) {
+      window.open(it.href, '_blank', 'noopener');
+    } else if (it.href) {
+      router.push(it.href);
     }
   };
   const onPointerCancel = () => {
@@ -200,21 +223,21 @@ export default function HeroOrbit({ matkul, info }: { matkul: KartuMatkul[]; inf
     lastFocus.current?.focus?.({ preventScroll: true });
   }, []);
 
-  const hoverText = hover === 'logo' ? 'Sapaan' : hover !== null ? matkul[hover]?.short ?? 'Lihat' : null;
+  const hoverText = hover === 'logo' ? 'Sapaan' : hover !== null ? items[hover]?.judul ?? 'Lihat' : null;
 
   return (
     <section
       ref={wrapRef}
       aria-label="Lima mata kuliah semester ini"
-      className="relative bg-white text-navy"
+      className="relative bg-space text-ink"
       style={{ height: `${100 + HERO.maxRotations * HERO.viewportsPerRotation * 100}svh` }}
     >
       <div className="sticky top-0 h-[100svh] overflow-hidden">
-        <h1 className="sr-only">Hypomonē @GRIT, beranda</h1>
+        <h1 className="sr-only">Hypomonē @LV, beranda</h1>
 
         <canvas
           ref={canvasRef}
-          aria-label="Logo BEM UI 3D dibungkus kartu lima mata kuliah yang berputar. Gunakan tombol mata kuliah di bawah untuk membukanya."
+          aria-label="Galaksi Andromeda 3D dibungkus kartu mata kuliah, halaman, dan tautan yang berputar. Gunakan tombol mata kuliah di bawah untuk membukanya."
           className={cn(
             'absolute inset-0 h-full w-full touch-pan-y transition-opacity duration-700',
             status === 'ready' ? 'opacity-100' : 'opacity-0',
@@ -236,10 +259,10 @@ export default function HeroOrbit({ matkul, info }: { matkul: KartuMatkul[]; inf
           )}
         >
           <Image
-            src="/images/logo-bem-ui.png"
+            src="/images/galaksi.png"
             alt=""
-            width={876}
-            height={876}
+            width={1024}
+            height={1024}
             priority
             className={cn('h-auto w-[min(48vw,280px)]', status === 'loading' && 'animate-pulse')}
           />
@@ -277,7 +300,7 @@ export default function HeroOrbit({ matkul, info }: { matkul: KartuMatkul[]; inf
                   <button
                     type="button"
                     onClick={() => openItem(i, null)}
-                    className="group relative flex w-full flex-col items-center gap-0.5 rounded-xl border border-border bg-white px-1 py-2 text-center shadow-xs transition-all duration-base ease-out-expo hover:-translate-y-0.5 hover:shadow-md active:scale-[.97] sm:min-w-[96px] sm:px-3"
+                    className="group relative flex w-full flex-col items-center gap-0.5 rounded-xl border border-border bg-surface px-1 py-2 text-center shadow-xs transition-all duration-base ease-out-expo hover:-translate-y-0.5 hover:shadow-md active:scale-[.97] sm:min-w-[96px] sm:px-3"
                     style={{ borderBottom: `3px solid ${c.accent}` }}
                   >
                     {c.fokus && <span aria-hidden className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-accent" />}
@@ -311,7 +334,7 @@ export default function HeroOrbit({ matkul, info }: { matkul: KartuMatkul[]; inf
         ref={labelRef}
         aria-hidden
         className={cn(
-          'pointer-events-none fixed left-0 top-0 z-[60] whitespace-nowrap rounded-full border border-glass-border bg-glass-strong px-4 py-2.5 text-base font-bold uppercase text-navy shadow-glass-soft backdrop-blur-[10px] transition-[opacity,visibility] duration-300 [@media(hover:none)]:hidden',
+          'pointer-events-none fixed left-0 top-0 z-[60] whitespace-nowrap rounded-full border border-glass-border bg-glass-strong px-4 py-2.5 text-base font-bold uppercase text-ink shadow-glass-soft backdrop-blur-[10px] transition-[opacity,visibility] duration-300 [@media(hover:none)]:hidden',
           hoverText ? 'visible opacity-100' : 'invisible opacity-0',
         )}
       >
@@ -321,7 +344,7 @@ export default function HeroOrbit({ matkul, info }: { matkul: KartuMatkul[]; inf
       {detail && (
         <CourseDetail
           matkul={matkul}
-          covers={covers}
+          covers={coverMatkul}
           initialIndex={detail.index}
           origin={detail.origin}
           getReturnQuad={getReturnQuad}

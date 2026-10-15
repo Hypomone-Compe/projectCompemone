@@ -37,7 +37,7 @@ export function Modal({ open, onClose, icon, title, description, actions, childr
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
       className={cn(
-        "m-auto w-full max-w-[420px] rounded-2xl border-0 bg-white p-7 text-navy shadow-xl backdrop:bg-navy/40 backdrop:backdrop-blur-sm",
+        "m-auto w-full max-w-[420px] rounded-2xl border-0 bg-surface p-7 text-ink shadow-xl backdrop:bg-black/60 backdrop:backdrop-blur-sm",
         className
       )}
     >

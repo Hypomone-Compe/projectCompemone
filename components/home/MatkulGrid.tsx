@@ -18,7 +18,7 @@ export default function MatkulGrid({ matkul }: { matkul: KartuMatkul[] }) {
           <li key={c.id}>
             <Link
               href={`/matkul/${c.id}`}
-              className="group flex h-full min-h-56 flex-col justify-between gap-6 rounded-2xl border border-border bg-white p-5 shadow-sm transition-all duration-base ease-out-expo hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-pink-light active:scale-[.98]"
+              className="group flex h-full min-h-56 flex-col justify-between gap-6 rounded-2xl border border-border bg-surface p-5 shadow-sm transition-all duration-base ease-out-expo hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-pink-light active:scale-[.98]"
             >
               <span className="flex items-start justify-between">
                 <span

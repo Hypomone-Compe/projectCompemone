@@ -1,7 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { ChartLine, LayoutDashboard, ListChecks, Moon, NotebookPen, Target as IkonTarget, Timer as IkonTimer } from 'lucide-react';
+import CourseTabs, { type Tab } from '@/components/course/CourseTabs';
 import { Bar, Kosong, Reveal } from '@/components/kit';
+import { setModeKucing } from '@/lib/maskot';
 import { META, shortName } from '@/lib/courses/meta';
 import {
   bacaKorelasi, catatan, deretHarian, geserBulan, hariBulan, hariPekan, hariTerakhir, jam,
@@ -800,6 +803,12 @@ function Timer({ onSelesai }: { onSelesai: (menit: number) => void }) {
   const [jalan, setJalan] = useState(false);
   const batas = useRef<number | null>(null);
 
+  /* Maskot di navbar membuka laptop dan fokus selama timer berjalan. */
+  useEffect(() => {
+    setModeKucing(jalan ? 'fokus' : 'bebas');
+  }, [jalan]);
+  useEffect(() => () => setModeKucing('bebas'), []);
+
   useEffect(() => {
     if (!jalan) return;
     const id = window.setInterval(() => {
@@ -1346,47 +1355,41 @@ export default function HarianBoard() {
     );
   }
 
+  /* Per blok, sama seperti halaman matkul: satu bagian tampil, sisanya di tab. */
   return (
-    <>
-      <section className="shell section">
-        <Kepala
-          id="ringkasan"
-          num="01"
-          judul="Ringkasan"
-          lede={`${fmtDateLong(hariIni)}. Empat angka yang paling cepat memberitahu apakah pekan ini sedang kamu pegang atau sedang lepas.`}
-        />
-        <Ringkasan hariIni={hariIni} />
-      </section>
-
-      <hr className="rule" />
-      <section className="shell section">
-        <SeksiKebiasaan hariIni={hariIni} />
-      </section>
-
-      <hr className="rule" />
-      <section className="shell section">
-        <SeksiJurnal hariIni={hariIni} />
-      </section>
-
-      <hr className="rule" />
-      <section className="shell section">
-        <SeksiFokus hariIni={hariIni} />
-      </section>
-
-      <hr className="rule" />
-      <section className="shell section">
-        <SeksiTidur hariIni={hariIni} />
-      </section>
-
-      <hr className="rule" />
-      <section className="shell section">
-        <SeksiTarget hariIni={hariIni} />
-      </section>
-
-      <hr className="rule" />
-      <section className="shell section">
-        <SeksiTinjauan hariIni={hariIni} />
-      </section>
-    </>
+    <CourseTabs
+      label="Bagian halaman harian"
+      tabs={TAB_HARIAN}
+      initial="ringkasan"
+      panels={{
+        ringkasan: (
+          <>
+            <Kepala
+              id="ringkasan"
+              num="01"
+              judul="Ringkasan"
+              lede={`${fmtDateLong(hariIni)}. Empat angka yang paling cepat memberitahu apakah pekan ini sedang kamu pegang atau sedang lepas.`}
+            />
+            <Ringkasan hariIni={hariIni} />
+          </>
+        ),
+        kebiasaan: <SeksiKebiasaan hariIni={hariIni} />,
+        jurnal: <SeksiJurnal hariIni={hariIni} />,
+        fokus: <SeksiFokus hariIni={hariIni} />,
+        tidur: <SeksiTidur hariIni={hariIni} />,
+        target: <SeksiTarget hariIni={hariIni} />,
+        tinjauan: <SeksiTinjauan hariIni={hariIni} />,
+      }}
+    />
   );
 }
+
+const TAB_HARIAN: Tab[] = [
+  { id: 'ringkasan', label: 'Ringkasan', Icon: LayoutDashboard },
+  { id: 'kebiasaan', label: 'Kebiasaan', Icon: ListChecks },
+  { id: 'jurnal', label: 'Jurnal', Icon: NotebookPen },
+  { id: 'fokus', label: 'Fokus', Icon: IkonTimer },
+  { id: 'tidur', label: 'Tidur', Icon: Moon },
+  { id: 'target', label: 'Target', Icon: IkonTarget },
+  { id: 'tinjauan', label: 'Tinjauan', Icon: ChartLine },
+];

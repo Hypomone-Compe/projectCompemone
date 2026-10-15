@@ -9,7 +9,7 @@ import { courseProgress, useStore } from '@/lib/store';
 import { SectionHeading } from './SectionHeading';
 
 /**
- * Matkul prioritas (SDA & PBP): yang nilainya sedang dikejar. Ditaruh tepat
+ * Matkul prioritas (SDA, PBP, Basdat): yang nilainya sedang dikejar. Ditaruh tepat
  * setelah "Hari ini", karena dua matkul ini yang harus disentuh setiap hari,
  * bukan hanya saat ada deadline.
  */
@@ -26,13 +26,14 @@ export default function Prioritas({ matkul }: { matkul: KartuMatkul[] }) {
           eyebrow="Prioritas semester ini"
           title={
             <>
-              {fokus.map(c => c.short).join(' & ')} <span className="text-accent">dikejar setiap hari.</span>
+              {fokus.length > 1 ? `${fokus.slice(0, -1).map(c => c.short).join(', ')} & ${fokus[fokus.length - 1].short}` : fokus[0].short}{' '}
+              <span className="text-accent">dikejar setiap hari.</span>
             </>
           }
-          description="Dua matkul yang nilainya belum maksimal. Lihat posisimu sekarang, apa yang kurang untuk A, dan satu langkah berikutnya."
+          description={`${fokus.length} matkul yang nilainya belum maksimal. Lihat posisimu sekarang, apa yang kurang untuk A, dan satu langkah berikutnya.`}
         />
 
-        <div className="mt-10 grid gap-4 lg:grid-cols-2">
+        <div className={`mt-10 grid gap-4 ${fokus.length >= 3 ? 'md:grid-cols-2 xl:grid-cols-3' : 'lg:grid-cols-2'}`}>
           {fokus.map(c => {
             const pro = courseProgress(c.id, c.topicIds.map(id => ({ id })));
             const n = hitungProyeksi(c.id, c.grading);

@@ -803,7 +803,7 @@ function Timer({ onSelesai }: { onSelesai: (menit: number) => void }) {
   const [jalan, setJalan] = useState(false);
   const batas = useRef<number | null>(null);
 
-  /* Maskot di navbar membuka laptop dan fokus selama timer berjalan. */
+  /* Maskot di pojok halaman membuka laptop dan fokus selama timer berjalan. */
   useEffect(() => {
     setModeKucing(jalan ? 'fokus' : 'bebas');
   }, [jalan]);
@@ -850,6 +850,7 @@ function Timer({ onSelesai }: { onSelesai: (menit: number) => void }) {
       <span className="eyebrow" style={{ color: 'var(--lime)' }}>
         Sesi fokus
       </span>
+
 
       <div className="mt-4 flex items-baseline gap-3">
         <span

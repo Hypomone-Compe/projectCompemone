@@ -5,7 +5,13 @@ import { BookOpenCheck, Calculator, CalendarDays, Library, Target, LayoutDashboa
 import SideRail from '@/components/site/SideRail';
 import { cn } from '@/lib/utils';
 
-export const TABS: { id: string; label: string; Icon: LucideIcon }[] = [
+export interface Tab {
+  id: string;
+  label: string;
+  Icon: LucideIcon;
+}
+
+export const TABS: Tab[] = [
   { id: 'ringkasan', label: 'Ringkasan', Icon: LayoutDashboard },
   { id: 'nilai', label: 'Nilai', Icon: Calculator },
   { id: 'rencana', label: 'Rencana', Icon: CalendarDays },
@@ -18,10 +24,23 @@ export const TABS: { id: string; label: string; Icon: LucideIcon }[] = [
  * Tab halaman matkul. Semua panel sudah dirender server; tab hanya menentukan
  * mana yang terlihat. Pilihan tab ditulis ke URL (?tab=nilai) supaya bisa
  * dibagikan, ditandai, dan dibuka langsung dari panel kartu di beranda.
+ * Dipakai juga halaman Harian dengan daftar tab sendiri; tautan lama berbentuk
+ * #jurnal tetap membuka tab yang sesuai.
  */
-export default function CourseTabs({ initial, panels }: { initial: string; panels: Record<string, React.ReactNode> }) {
-  const valid = TABS.filter(t => panels[t.id]);
-  const [tab, setTab] = React.useState(valid.some(t => t.id === initial) ? initial : 'ringkasan');
+export default function CourseTabs({
+  initial,
+  panels,
+  tabs = TABS,
+  label = 'Bagian mata kuliah',
+}: {
+  initial: string;
+  panels: Record<string, React.ReactNode>;
+  tabs?: Tab[];
+  label?: string;
+}) {
+  const valid = tabs.filter(t => panels[t.id]);
+  const awal = valid[0]?.id ?? 'ringkasan';
+  const [tab, setTab] = React.useState(valid.some(t => t.id === initial) ? initial : awal);
   const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
   const topRef = React.useRef<HTMLDivElement>(null);
 
@@ -32,18 +51,27 @@ export default function CourseTabs({ initial, panels }: { initial: string; panel
   }, [initial]);
 
   React.useEffect(() => {
-    const onPop = () => {
-      const t = new URLSearchParams(window.location.search).get('tab') || 'ringkasan';
-      setTab(valid.some(v => v.id === t) ? t : 'ringkasan');
+    const baca = () => {
+      const q = new URLSearchParams(window.location.search).get('tab');
+      const h = window.location.hash.slice(1);
+      const t = [q, h].find(x => x && valid.some(v => v.id === x)) || awal;
+      setTab(t);
     };
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, [valid]);
+    baca();
+    window.addEventListener('popstate', baca);
+    window.addEventListener('hashchange', baca);
+    return () => {
+      window.removeEventListener('popstate', baca);
+      window.removeEventListener('hashchange', baca);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const pilih = (id: string) => {
     setTab(id);
     const url = new URL(window.location.href);
-    if (id === 'ringkasan') url.searchParams.delete('tab');
+    url.hash = '';
+    if (id === awal) url.searchParams.delete('tab');
     else url.searchParams.set('tab', id);
     window.history.pushState(null, '', url);
     /* Kalau tab-bar sudah menempel, kembalikan ke awal panel, bukan ke tengah panel lama. */
@@ -65,12 +93,12 @@ export default function CourseTabs({ initial, panels }: { initial: string; panel
   return (
     <>
       <div ref={topRef} />
-      <SideRail label="Bagian mata kuliah" items={valid} active={tab} onPick={pilih} />
+      <SideRail label={label} items={valid} active={tab} onPick={pilih} />
       <div className="no-print py-2">
         <div className="shell">
           <div
             role="tablist"
-            aria-label="Bagian mata kuliah"
+            aria-label={label}
             className="flex gap-1 overflow-x-auto rounded-full border border-glass-border bg-glass-strong p-[5px] shadow-glass-soft backdrop-blur-glass [scrollbar-width:none] sm:inline-flex [&::-webkit-scrollbar]:hidden"
           >
             {valid.map((t, i) => {

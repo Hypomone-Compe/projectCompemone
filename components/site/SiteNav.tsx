@@ -13,6 +13,7 @@ import { META, shortName } from '@/lib/courses/meta';
 import { localMode } from '@/lib/supabase/config';
 import { TAUTAN_LUAR } from '@/lib/tautan';
 import { cn } from '@/lib/utils';
+import Kucing from '@/components/maskot/Kucing';
 import SyncBadge from './SyncBadge';
 
 const LINKS = [
@@ -93,14 +94,16 @@ export default function SiteNav() {
 
             <div className="flex items-center gap-1.5">
               <SyncBadge />
+              {/* Maskot selalu menemani di navbar: jalan-jalan, dan membuka laptop saat
+                  timer fokus berjalan. Diklik = sapaan hari ini. */}
               <button
                 type="button"
                 onClick={bukaSapaan}
-                aria-label="Sapaan hari ini"
+                aria-label="Sapaan hari ini dari si kucing"
                 title="Sapaan hari ini"
-                className="hidden size-[38px] items-center justify-center rounded-full text-secondary transition-colors hover:bg-navy-5 hover:text-ink lg:flex"
+                className="h-[44px] overflow-hidden rounded-full transition-colors duration-base hover:bg-navy-5"
               >
-                <Sparkles aria-hidden className="size-[18px]" />
+                <Kucing perilaku="navbar" label="" className="pointer-events-none block h-[44px] w-[84px] sm:w-[124px]" />
               </button>
               {!localMode && (
                 <button

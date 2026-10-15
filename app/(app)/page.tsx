@@ -15,6 +15,7 @@ import { emailConfigured, RECIPIENT } from '@/lib/email-config';
 import {
   buildWeeks, currentWeek, fmtDateLong, fmtRange, parseYmd, semesterStatus, sessionsOnDay, todayYmd, TOTAL_WEEKS, TZ,
 } from '@/lib/plan';
+import { itemOrbit } from '@/lib/orbit';
 import { ringkasMatkul } from '@/lib/ringkasan-matkul';
 import { TAUTAN_LUAR } from '@/lib/tautan';
 import type { Day } from '@/lib/types';
@@ -58,7 +59,7 @@ export default function BerandaPage() {
 
   return (
     <>
-      <HeroOrbit matkul={matkul} info={{ tanggal: fmtDateLong(today), minggu: mingguTeks, ujian: cur?.exam ?? null }} />
+      <HeroOrbit matkul={matkul} items={itemOrbit(matkul)} info={{ tanggal: fmtDateLong(today), minggu: mingguTeks, ujian: cur?.exam ?? null }} />
 
       <HariIni
         hari={fmtDateLong(today)}
@@ -73,7 +74,7 @@ export default function BerandaPage() {
 
       <Prioritas matkul={matkul} />
 
-      <section aria-labelledby="matkul-judul" className="bg-white py-16 sm:py-24">
+      <section aria-labelledby="matkul-judul" className="bg-surface py-16 sm:py-24">
         <div className="mx-auto max-w-wrap px-5">
           <SectionHeading
             id="matkul-judul"
@@ -105,7 +106,7 @@ export default function BerandaPage() {
         </div>
       </section>
 
-      <section id="jadwal" aria-labelledby="jadwal-judul" className="bg-white py-16 sm:py-24">
+      <section id="jadwal" aria-labelledby="jadwal-judul" className="bg-surface py-16 sm:py-24">
         <div className="mx-auto max-w-wrap px-5">
           <SectionHeading id="jadwal-judul" eyebrow="Jadwal tetap" title="Senin sampai Jumat" description="Hari ini disorot. Klik sesi untuk membuka matkulnya." />
           <div className="mt-10">
@@ -114,7 +115,7 @@ export default function BerandaPage() {
         </div>
       </section>
 
-      <section aria-labelledby="halaman-judul" className="bg-white pb-16 sm:pb-24">
+      <section aria-labelledby="halaman-judul" className="bg-surface pb-16 sm:pb-24">
         <div className="mx-auto max-w-wrap px-5">
           <SectionHeading id="halaman-judul" eyebrow="Di luar kelas" title="Halaman lain" />
           <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -122,7 +123,7 @@ export default function BerandaPage() {
               <li key={h.href}>
                 <Link
                   href={h.href}
-                  className="group flex h-full min-h-48 flex-col justify-between gap-6 rounded-2xl border border-border bg-white p-5 shadow-sm transition-all duration-base ease-out-expo hover:-translate-y-1 hover:shadow-lg active:scale-[.98]"
+                  className="group flex h-full min-h-48 flex-col justify-between gap-6 rounded-2xl border border-border bg-surface p-5 shadow-sm transition-all duration-base ease-out-expo hover:-translate-y-1 hover:shadow-lg active:scale-[.98]"
                 >
                   <span className="flex items-start justify-between">
                     <span className="flex size-11 items-center justify-center rounded-lg text-white" style={{ background: h.warna }}>

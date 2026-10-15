@@ -22,7 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col bg-white">
+    <div className="flex min-h-dvh flex-col bg-surface">
       <a
         href="#konten"
         className="sr-only z-[80] rounded-full bg-accent px-4 py-2 font-bold text-white focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-4"

@@ -11,7 +11,7 @@ export const KELAS = {
   nama: 'Aljabar Linear',
   kelas: 'Kelas Internasional',
   peran: 'Asisten Dosen',
-  accent: '#475ca3',
+  accent: '#8297f0',
   accentOn: '#ffffff',
 };
 

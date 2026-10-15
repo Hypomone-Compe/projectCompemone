@@ -1,7 +1,7 @@
 import type { Config } from 'tailwindcss';
 
-/* Disalin dari design system Kabinet TerusTerang (bemuidev/designsystem/companyprofile)
-   supaya kelas utilitasnya identik: navy, pink, blue, glass, radius 8–28px, shadow navy. */
+/* Struktur dari design system Kabinet TerusTerang (bemuidev/designsystem/companyprofile),
+   nilai warnanya versi gelap tema luar angkasa. navy = permukaan menonjol, ink = teks. */
 const config: Config = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './lib/**/*.{ts,tsx}'],
   theme: {
@@ -18,8 +18,12 @@ const config: Config = {
       colors: {
         white: '#FFFFFF',
         'off-white': 'var(--off-white)',
+        /* Tema luar angkasa: permukaan kartu & teks utama. */
+        surface: { DEFAULT: '#0D1022', 2: '#121632' },
+        ink: '#EEF0FB',
+        space: '#05060D',
         navy: {
-          DEFAULT: '#0B102D',
+          DEFAULT: '#171C45',
           80: 'var(--navy-80)',
           70: 'var(--navy-70)',
           50: 'var(--navy-50)',
@@ -28,16 +32,16 @@ const config: Config = {
           5: 'var(--navy-05)',
         },
         blue: {
-          DEFAULT: '#475CA3',
+          DEFAULT: '#8297F0',
           hover: 'var(--blue-hover)',
           soft: '#9CB3D3',
           pale: 'var(--blue-pale)',
         },
-        maroon: { DEFAULT: '#5E121C', pale: 'var(--maroon-pale)' },
-        red: { DEFAULT: '#82181A', hover: 'var(--red-hover)', pale: 'var(--red-pale)' },
-        pink: { DEFAULT: '#D64C6F', light: '#FFCED8', pale: 'var(--pink-pale)' },
+        maroon: { DEFAULT: '#F29BB0', pale: 'var(--maroon-pale)' },
+        red: { DEFAULT: '#F06A6A', hover: 'var(--red-hover)', pale: 'var(--red-pale)' },
+        pink: { DEFAULT: '#E8628A', light: '#FFCDD9', pale: 'var(--pink-pale)' },
         accent: {
-          DEFAULT: '#D64C6F',
+          DEFAULT: '#E8628A',
           hover: 'var(--accent-hover)',
           pale: 'var(--accent-pale)',
         },

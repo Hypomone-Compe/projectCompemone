@@ -16,7 +16,7 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: 'Hypomonē @GRIT',
+    name: 'Hypomonē @LV',
     short_name: 'Hypomonē',
     description:
       'Monitoring akademik dan harian: rubrik nilai lima mata kuliah, kebiasaan, jurnal, jam fokus, dan keuangan.',
@@ -26,8 +26,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     /* Putih, sama dengan badan halaman, supaya tidak ada kedipan saat dibuka. */
-    background_color: '#ffffff',
-    theme_color: '#ffffff',
+    background_color: '#05060d',
+    theme_color: '#05060d',
     orientation: 'any',
     categories: ['education', 'productivity'],
     icons: [

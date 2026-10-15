@@ -6,10 +6,10 @@ import { cn } from "@/lib/utils";
 const alertVariants = cva("flex gap-3 rounded-lg border px-[18px] py-4 text-sm leading-[1.55]", {
   variants: {
     variant: {
-      success: "border-[#cfeeda] bg-[#f0fbf4] text-[#146c3b]",
-      error: "border-[#f4d5d4] bg-red-pale text-red",
-      warning: "border-[#f5e3b5] bg-[#fff8e8] text-[#8a5b07]",
-      info: "border-[#dce3f2] bg-blue-pale text-blue",
+      success: "border-success/30 bg-success-pale text-success",
+      error: "border-red/30 bg-red-pale text-red",
+      warning: "border-warning/30 bg-warning-pale text-warning",
+      info: "border-blue/30 bg-blue-pale text-blue",
     },
   },
   defaultVariants: { variant: "info" },

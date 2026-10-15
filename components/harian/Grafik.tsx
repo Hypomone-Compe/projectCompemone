@@ -20,7 +20,7 @@ import {
   type BarisPekan, type RingkasHari, type Skala, type TitikHari,
 } from '@/lib/harian';
 
-const PERMUKAAN = '#ffffff';
+const PERMUKAAN = '#0d1022';
 const RULE = '#d5d0c2';
 const INK = '#12120f';
 

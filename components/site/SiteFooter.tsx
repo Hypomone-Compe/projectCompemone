@@ -20,10 +20,10 @@ export default function SiteFooter() {
       <div className="relative mx-auto max-w-wrap">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <Image src="/images/logo-bem-ui.png" alt="" width={876} height={876} className="size-20 md:size-24" />
+            <Image src="/images/galaksi-ikon.png" alt="" width={256} height={256} className="size-20 md:size-24" />
             <div>
               <p className="text-3xl font-extrabold tracking-tight text-white md:text-4xl">
-                Hypomonē <span className="text-pink-light">@GRIT</span>
+                Hypomonē <span className="text-pink-light">@LV</span>
               </p>
               <p className="mt-1 text-sm">ὑπομονή · ketekunan yang bertahan. Gasal 2026/2027.</p>
             </div>
@@ -84,7 +84,7 @@ export default function SiteFooter() {
           </div>
         </div>
 
-        <p className="mt-10 text-[13px]">© {new Date().getFullYear()} Hypomonē @GRIT · dibuat untuk satu orang.</p>
+        <p className="mt-10 text-[13px]">© {new Date().getFullYear()} Hypomonē @LV · dibuat untuk satu orang.</p>
       </div>
     </footer>
   );

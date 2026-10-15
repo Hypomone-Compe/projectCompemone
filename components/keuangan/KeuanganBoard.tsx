@@ -63,7 +63,7 @@ function Ringkasan({ bulan }: { bulan: string }) {
   const sisaAnggaran = ang.bulanan > 0 ? ang.bulanan - r.keluar : null;
 
   const ubin = [
-    { label: 'Saldo kas', nilai: rupiahRingkas(kas), ket: `Kekayaan bersih ${rupiahRingkas(kas + inv.nilai)} termasuk investasi.`, warna: 'border-t-navy' },
+    { label: 'Saldo kas', nilai: rupiahRingkas(kas), ket: `Kekayaan bersih ${rupiahRingkas(kas + inv.nilai)} termasuk investasi.`, warna: 'border-t-ink' },
     { label: `Masuk ${namaBulan(bulan)}`, nilai: rupiahRingkas(r.masuk), ket: r.masuk ? 'Uang saku, honor, beasiswa, dll.' : 'Belum ada pemasukan.', warna: 'border-t-blue' },
     { label: `Keluar ${namaBulan(bulan)}`, nilai: rupiahRingkas(r.keluar), ket: `${r.jumlahTransaksi} transaksi tercatat.`, warna: 'border-t-accent' },
     {
@@ -78,7 +78,7 @@ function Ringkasan({ bulan }: { bulan: string }) {
     <>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {ubin.map(u => (
-          <div key={u.label} className={cn('rounded-2xl border border-t-4 border-border bg-white p-5 shadow-sm', u.warna)}>
+          <div key={u.label} className={cn('rounded-2xl border border-t-4 border-border bg-surface p-5 shadow-sm', u.warna)}>
             <p className="text-[12.5px] font-bold text-muted">{u.label}</p>
             <p className="num mt-1.5 text-3xl font-extrabold tracking-tight">{u.nilai}</p>
             <p className="mt-1.5 text-[13px] leading-snug text-secondary">{u.ket}</p>
@@ -296,7 +296,7 @@ function DaftarTransaksi({ bulan }: { bulan: string }) {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-6">
+    <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative sm:w-72">
           <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-faint" />
@@ -331,11 +331,11 @@ function DaftarTransaksi({ bulan }: { bulan: string }) {
                   {isi.map(t => {
                     const masuk = t.jenis === 'masuk';
                     return (
-                      <li key={t.id} className="flex items-center gap-3 bg-white px-3 py-3 sm:px-4">
+                      <li key={t.id} className="flex items-center gap-3 bg-surface px-3 py-3 sm:px-4">
                         <span
                           aria-hidden
                           className="flex size-10 shrink-0 items-center justify-center rounded-lg"
-                          style={{ background: masuk ? '#eef1f9' : '#fdeeee', color: masuk ? WARNA_MASUK : WARNA_KELUAR }}
+                          style={{ background: masuk ? 'rgba(111, 134, 255, 0.15)' : 'rgba(255, 107, 94, 0.14)', color: masuk ? WARNA_MASUK : WARNA_KELUAR }}
                         >
                           {masuk ? <ArrowDownLeft className="size-5" /> : <ArrowUpRight className="size-5" />}
                         </span>
@@ -348,17 +348,17 @@ function DaftarTransaksi({ bulan }: { bulan: string }) {
                             {[t.merchant, t.catatan].filter(Boolean).join(' · ') || '—'}
                           </span>
                         </span>
-                        <span className={cn('num shrink-0 text-[15px] font-extrabold', masuk ? 'text-blue' : 'text-navy')}>
+                        <span className={cn('num shrink-0 text-[15px] font-extrabold', masuk ? 'text-blue' : 'text-ink')}>
                           {masuk ? '+' : '−'}
                           {rupiah(t.jumlah)}
                         </span>
                         <span className="flex shrink-0 items-center">
                           {t.struk && (
-                            <button type="button" onClick={() => void bukaStruk(t.struk!)} aria-label="Lihat foto struk" className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-navy-5 hover:text-navy">
+                            <button type="button" onClick={() => void bukaStruk(t.struk!)} aria-label="Lihat foto struk" className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-navy-5 hover:text-ink">
                               <Receipt aria-hidden className="size-4" />
                             </button>
                           )}
-                          <button type="button" onClick={() => setEdit(t)} aria-label={`Ubah ${t.kategori}`} className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-navy-5 hover:text-navy">
+                          <button type="button" onClick={() => setEdit(t)} aria-label={`Ubah ${t.kategori}`} className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-navy-5 hover:text-ink">
                             <Pencil aria-hidden className="size-4" />
                           </button>
                           <button type="button" onClick={() => hapus(t)} aria-label={`Hapus ${t.kategori}`} className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-red-pale hover:text-red">
@@ -402,8 +402,8 @@ function Lembar({ judul, onClose, children }: { judul: string; onClose: () => vo
   }, [onClose]);
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center p-3 sm:items-center" role="dialog" aria-modal="true" aria-label={judul}>
-      <button type="button" aria-label="Tutup" onClick={onClose} className="absolute inset-0 bg-navy/40 backdrop-blur-sm" />
-      <div data-lenis-prevent className="relative max-h-[90dvh] w-full max-w-[620px] overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-6" style={{ animation: 'rise .3s var(--ease-out) both' }}>
+      <button type="button" aria-label="Tutup" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div data-lenis-prevent className="relative max-h-[90dvh] w-full max-w-[620px] overflow-y-auto rounded-2xl bg-surface p-5 shadow-xl sm:p-6" style={{ animation: 'rise .3s var(--ease-out) both' }}>
         <div className="mb-4 flex items-center justify-between">
           <p className="text-lg font-extrabold">{judul}</p>
           <button type="button" onClick={onClose} aria-label="Tutup" className="flex size-9 items-center justify-center rounded-full hover:bg-navy-5">
@@ -426,7 +426,7 @@ function Kategori({ bulan }: { bulan: string }) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+      <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6">
         <p className="text-[13px] font-bold text-muted">Pengeluaran per kategori vs batas</p>
         <ul className="mt-4 space-y-4">
           {KATEGORI_KELUAR.map(k => {
@@ -460,7 +460,7 @@ function Kategori({ bulan }: { bulan: string }) {
         <TambahBatas ada={new Set([...terpakai.keys(), ...Object.keys(ang.kategori)])} />
       </div>
 
-      <div className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+      <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6">
         <p className="text-[13px] font-bold text-muted">Dari mana uangnya datang</p>
         {masuk.length === 0 ? (
           <p className="mt-4 text-sm text-muted">Belum ada pemasukan bulan ini.</p>
@@ -489,7 +489,7 @@ function BatasKategori({ kategori, batas }: { kategori: string; batas: number })
   const [isi, setIsi] = useState(batas ? String(batas) : '');
   if (!buka)
     return (
-      <button type="button" onClick={() => setBuka(true)} className="mt-1 text-[12px] font-bold text-muted hover:text-navy">
+      <button type="button" onClick={() => setBuka(true)} className="mt-1 text-[12px] font-bold text-muted hover:text-ink">
         {batas ? 'Ubah batas' : '+ Pasang batas'}
       </button>
     );
@@ -599,7 +599,7 @@ function Portofolio() {
         </div>
       )}
 
-      <form onSubmit={simpan} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+      <form onSubmit={simpan} className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <label className="block">
             <span className="field__label">Nama</span>
@@ -633,7 +633,7 @@ function Portofolio() {
             const selisih = x.nilai - x.modal;
             const persen = x.modal > 0 ? (selisih / x.modal) * 100 : 0;
             return (
-              <li key={x.id} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
+              <li key={x.id} className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-[12.5px] font-bold text-muted">{x.jenis}</p>
@@ -708,7 +708,7 @@ export default function KeuanganBoard() {
   return (
     <div className="shell space-y-14 pb-16 pt-4 sm:space-y-20">
       {/* Aksi cepat */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-white p-3 shadow-md sm:flex-row sm:items-center sm:justify-between sm:p-4">
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-3 shadow-md sm:flex-row sm:items-center sm:justify-between sm:p-4">
         <div className="grid grid-cols-2 gap-2 sm:flex">
           <Button size="lg" onClick={() => setScan(true)}>
             <Camera aria-hidden /> Scan struk

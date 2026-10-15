@@ -12,7 +12,7 @@ const badgeVariants = cva(
         blue: "bg-blue-pale text-blue",
         maroon: "bg-maroon-pale text-maroon",
         red: "bg-red-pale text-red",
-        outline: "border-[1.5px] border-border bg-white text-secondary",
+        outline: "border-[1.5px] border-border bg-surface text-secondary",
       },
     },
     defaultVariants: { variant: "pink" },

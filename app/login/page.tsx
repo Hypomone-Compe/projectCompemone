@@ -7,6 +7,7 @@ import { MeshGradient } from '@/components/webgl';
 import { META, shortName, TOTAL_SKS } from '@/lib/courses/meta';
 import { TOTAL_WEEKS } from '@/lib/kalender';
 import { supabaseConfigured } from '@/lib/supabase/config';
+import Kucing from '@/components/maskot/Kucing';
 import LoginForm from './LoginForm';
 
 export const metadata: Metadata = { title: 'Masuk' };
@@ -20,15 +21,15 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { e } = await searchParams;
 
   return (
-    <main className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-white">
+    <main className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-surface">
       <MeshGradient className="-z-10 h-full" />
 
       {/* Bilah atas: pill kaca seperti navbar, tanpa menu (belum masuk). */}
       <header className="px-3 pt-4 sm:px-5">
         <div className="mx-auto flex max-w-[1080px] items-center justify-between rounded-full border border-glass-border bg-glass-strong py-2 pl-3 pr-4 shadow-glass-soft backdrop-blur-glass sm:pl-5">
-          <span className="flex items-center gap-2.5 text-[17px] font-extrabold tracking-tight text-navy">
-            <Image src="/images/logo-bem-ui.png" alt="" width={876} height={876} priority className="size-9" />
-            Hypomonē <span className="text-accent">@GRIT</span>
+          <span className="flex items-center gap-2.5 text-[17px] font-extrabold tracking-tight text-ink">
+            <Image src="/images/galaksi-ikon.png" alt="" width={256} height={256} priority className="size-9" />
+            Hypomonē <span className="text-accent">@LV</span>
           </span>
           <span className="flex items-center gap-1.5 text-[13px] font-bold text-secondary">
             <Lock aria-hidden className="size-3.5" /> Akses pribadi
@@ -41,11 +42,11 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <span className="inline-flex rounded-full bg-pink-pale px-[13px] py-[5px] text-[12.5px] font-bold text-accent-hover">
             Gasal 2026/2027 · {META.length} mata kuliah · {TOTAL_SKS} SKS
           </span>
-          <h1 className="mt-6 text-[clamp(2.6rem,7vw,5.2rem)] font-extrabold leading-[1.02] tracking-[-0.04em] text-navy">
+          <h1 className="mt-6 text-[clamp(2.6rem,7vw,5.2rem)] font-extrabold leading-[1.02] tracking-[-0.04em] text-ink">
             Hypomonē
             <br />
-            <span className="mt-2 inline-block rounded-2xl border border-glass-border bg-glass-strong px-4 py-1 text-maroon shadow-glass backdrop-blur-glass">
-              @GRIT
+            <span className="mt-2 inline-block rounded-2xl border border-glass-border bg-glass-strong px-4 py-1 text-accent shadow-glass backdrop-blur-glass">
+              @LV
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-[17px] leading-relaxed text-secondary lg:mx-0">
@@ -67,7 +68,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-border bg-white p-6 shadow-xl sm:p-8">
+        <div className="relative mt-20 rounded-2xl border border-border bg-surface p-6 pt-20 shadow-xl sm:p-8 sm:pt-20 lg:mt-24">
+          {/* Maskot menyambut di atas kartu masuk. */}
+          <Kucing ukuran={150} className="absolute -top-24 left-1/2 -translate-x-1/2" />
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Masuk</p>
           <h2 className="mt-2 text-[26px] font-extrabold tracking-tight">Selamat datang kembali.</h2>
           <p className="mt-1.5 text-[14.5px] text-secondary">Tidak ada pendaftaran. Situs ini hanya bisa dibuka oleh pemiliknya.</p>

@@ -46,7 +46,7 @@ export default function SideRail({ items, active, onPick, label }: { items: Rail
               aria-hidden
               className={cn(
                 'whitespace-nowrap rounded-full border border-glass-border bg-glass-strong px-2.5 py-1 text-[12.5px] font-bold shadow-glass-soft backdrop-blur-glass transition-all duration-base ease-out-expo',
-                on ? 'text-navy' : 'text-secondary hover:text-navy',
+                on ? 'text-ink' : 'text-secondary hover:text-ink',
                 buka ? 'translate-x-0 opacity-100' : 'pointer-events-none -translate-x-1 opacity-0',
               )}
             >

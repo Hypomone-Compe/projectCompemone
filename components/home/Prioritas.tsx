@@ -47,7 +47,7 @@ export default function Prioritas({ matkul }: { matkul: KartuMatkul[] }) {
             return (
               <article
                 key={c.id}
-                className="relative overflow-hidden rounded-2xl border border-border bg-white p-6 shadow-lg sm:p-7"
+                className="relative overflow-hidden rounded-2xl border border-border bg-surface p-6 shadow-lg sm:p-7"
                 style={{ ['--c' as string]: c.accent }}
               >
                 <span
@@ -106,7 +106,7 @@ export default function Prioritas({ matkul }: { matkul: KartuMatkul[] }) {
                     <li className="flex gap-2.5">
                       <Flag aria-hidden className="mt-0.5 size-4 shrink-0 text-c" />
                       <span className="text-secondary">
-                        <b className="text-navy">Minggu {c.deadlineBerikut.n} · {c.deadlineBerikut.label}:</b> {c.deadlineBerikut.text}
+                        <b className="text-ink">Minggu {c.deadlineBerikut.n} · {c.deadlineBerikut.label}:</b> {c.deadlineBerikut.text}
                       </span>
                     </li>
                   )}
@@ -114,7 +114,7 @@ export default function Prioritas({ matkul }: { matkul: KartuMatkul[] }) {
                     <li className="flex gap-2.5">
                       <CalendarClock aria-hidden className="mt-0.5 size-4 shrink-0 text-c" />
                       <span className="text-secondary">
-                        <b className="text-navy">{c.sesiBerikut.kapan}, {c.sesiBerikut.jam}</b> · {c.sesiBerikut.kind} · {c.sesiBerikut.ruang}
+                        <b className="text-ink">{c.sesiBerikut.kapan}, {c.sesiBerikut.jam}</b> · {c.sesiBerikut.kind} · {c.sesiBerikut.ruang}
                       </span>
                     </li>
                   )}

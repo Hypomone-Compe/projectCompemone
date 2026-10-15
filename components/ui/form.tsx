@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const controlClass =
-  "w-full rounded-lg border-[1.5px] border-border bg-white px-4 py-[13px] text-[15px] text-navy outline-none transition-[border-color,box-shadow] duration-fast ease-out-expo placeholder:text-faint focus:border-accent focus:ring-4 focus:ring-pink-pale aria-[invalid=true]:border-red";
+  "w-full rounded-lg border-[1.5px] border-border bg-surface px-4 py-[13px] text-[15px] text-ink outline-none transition-[border-color,box-shadow] duration-fast ease-out-expo placeholder:text-faint focus:border-accent focus:ring-4 focus:ring-pink-pale aria-[invalid=true]:border-red";
 
 export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   ({ className, ...props }, ref) => <input ref={ref} className={cn(controlClass, className)} {...props} />
@@ -48,7 +48,7 @@ export interface FieldProps {
 export function Field({ label, htmlFor, hint, error, className, children }: FieldProps) {
   return (
     <div className={cn("flex flex-col gap-[7px]", className)}>
-      <label htmlFor={htmlFor} className="text-[13.5px] font-bold text-navy">
+      <label htmlFor={htmlFor} className="text-[13.5px] font-bold text-ink">
         {label}
       </label>
       {children}

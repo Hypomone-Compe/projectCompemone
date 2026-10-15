@@ -21,9 +21,9 @@ import { useId, useState } from 'react';
 import { batang, tickBulat, useLebar } from '@/components/svg';
 import { rupiah, rupiahRingkas, type TitikBulan } from '@/lib/keuangan';
 
-export const WARNA_MASUK = '#2b46f0';
-export const WARNA_KELUAR = '#d62b1c';
-const PERMUKAAN = '#ffffff';
+export const WARNA_MASUK = '#6f86ff';
+export const WARNA_KELUAR = '#ff6b5e';
+const PERMUKAAN = '#0d1022';
 
 /* ------------------------------------------------------------- tooltip */
 interface Petunjuk {

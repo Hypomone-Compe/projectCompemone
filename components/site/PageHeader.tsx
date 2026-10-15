@@ -31,7 +31,7 @@ export default function PageHeader({
       <div className="shell">
         <Breadcrumb items={crumbs} />
         {badge && <div className="mt-5">{badge}</div>}
-        <h1 className="mt-4 max-w-4xl text-[clamp(2.1rem,5.6vw,4rem)] font-extrabold leading-[1.02] tracking-[-0.035em] text-navy">
+        <h1 className="mt-4 max-w-4xl text-[clamp(2.1rem,5.6vw,4rem)] font-extrabold leading-[1.02] tracking-[-0.035em] text-ink">
           {title}
           {emph && (
             <>

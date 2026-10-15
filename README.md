@@ -1,4 +1,4 @@
-# Hypomonē @GRIT
+# Hypomonē @LV
 
 > *Hypomonē* (ὑπομονή): ketekunan yang bertahan saat berat.
 
@@ -8,10 +8,10 @@ ditambah halaman harian, keuangan (dengan scan struk), dan asisten dosen.
 Penerus **Sandbox** (`patty/Sandbox`). Seluruh isi BRP, kalkulator nilai, rencana mingguan, kotak Feynman,
 halaman harian, dan asdos dibawa apa adanya. Yang berubah:
 
-| | Sandbox | Hypomonē @GRIT |
+| | Sandbox | Hypomonē @LV |
 |---|---|---|
-| Tampilan | editorial-brutalist krem | design system Kabinet TerusTerang (`bemuidev/designsystem/companyprofile`): putih, navy, pink, Plus Jakarta Sans, navbar kaca |
-| Beranda | hero teks | hero orbit 3D: logo BEM di tengah, kartu 5 matkul berputar di atas grid silinder |
+| Tampilan | editorial-brutalist krem | struktur design system Kabinet TerusTerang (`bemuidev/designsystem/companyprofile`) dalam **tema gelap luar angkasa**: nila gelap, pink, Plus Jakarta Sans, navbar kaca |
+| Beranda | hero teks | hero orbit 3D: **galaksi Andromeda** dari partikel di tengah, 13 kartu (5 matkul, Keuangan, Scan, Harian, Asdos, SCeLE, SLCM, Cosmic, NotebookLM) berputar di atas grid & bintang |
 | Klik kartu | (tidak ada) | panel matkul fungsional: kelas berikutnya, agenda terdekat, proyeksi nilai, pemahaman, minggu ini/depan, 6 pintasan |
 | Halaman matkul | 7 seksi digulir panjang | 6 tab (Ringkasan, Nilai, Rencana, Materi, Strategi, Sumber), bisa dibuka langsung `?tab=nilai` |
 | Data | localStorage per perangkat | **Supabase**, sinkron laptop ⇄ HP (realtime), tetap jalan luring |
@@ -97,11 +97,11 @@ API store lama (`setEntry`, `addTransaksi`, …) tidak berubah. Di baliknya:
 Empat lapis: middleware mengeluarkan sesi email lain · route login menolak email lain sebelum Supabase dihubungi ·
 RLS `is_owner()` di setiap tabel & bucket · trigger `auth.users` menolak pembuatan akun email lain.
 
-### Kartu orbit ([`lib/kartu.ts`](lib/kartu.ts))
+### Kartu orbit ([`lib/kartu.ts`](lib/kartu.ts), [`lib/orbit.ts`](lib/orbit.ts))
 
-Kartu matkul digambar di canvas (logo BEM, warna matkul, minggu berjalan). **Setelah UTS, untuk mengganti:**
+Tiap item jadi satu "planet" yang digambar di canvas (warna item, minggu berjalan). Setiap item tampil sekali; hanya SDA, PBP, dan Keuangan yang muncul dua kali (`ITEM_GANDA`). **Untuk mengganti dengan gambar sendiri:**
 taruh gambar rasio 1.4:1.9 di `public/images/matkul/sda.png`, lalu isi `cover: '/images/matkul/sda.png'`
-di [`lib/courses/meta.ts`](lib/courses/meta.ts). Logo 3D di tengah diambil dari `public/images/logo-bem-ui.png`.
+di [`lib/courses/meta.ts`](lib/courses/meta.ts). Galaksi 3D di tengah dibuat dari partikel di [`components/home/orbit/galaxy.ts`](components/home/orbit/galaxy.ts).
 
 ### Scan struk ([`components/keuangan/ScanStruk.tsx`](components/keuangan/ScanStruk.tsx))
 
@@ -144,5 +144,9 @@ lib/
   courses/                 isi BRP (server saja)
 supabase/schema.sql        skema + RLS + storage + realtime
 ```
+
+### Maskot ([`components/maskot/Kucing.tsx`](components/maskot/Kucing.tsx))
+
+Kucing hitam voxel bermata kuning (three.js), menyambut di sapaan pembuka dan halaman masuk: lompat masuk, kedip, ekor mengibas, kepala mengikuti kursor.
 
 > Kalau isi situs berbeda dengan pengumuman dosen atau SCeLE, **selalu ikuti dosen.**

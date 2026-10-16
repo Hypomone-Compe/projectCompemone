@@ -354,7 +354,7 @@ function hariIniBlock(hari: string, sesi: Sesi[]) {
   </table>`;
 }
 
-/* Bagian pribadi: checklist yang belum dicentang, uang kemarin, progres prioritas. */
+/* Bagian pribadi: target bertenggat dekat, checklist yang belum dicentang, uang kemarin, progres prioritas. */
 function pribadiBlock(p: DataPribadi) {
   const checklist = p.checklist.length
     ? p.checklist
@@ -389,7 +389,14 @@ function pribadiBlock(p: DataPribadi) {
   const kotak = (judul: string, isi: string) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;background:${WHITE};border:1px solid ${RULE};border-radius:12px;">
     <tr><td style="padding:15px 18px;">${eyebrow(judul, PINK)}${isi}</td></tr></table>`;
 
-  return kotak(`Checklist minggu ini · ${p.checklist.length} belum`, checklist) + kotak('Uang', uang) + (prio ? kotak(`Prioritas: ${p.prioritas.map(x => x.nama).join(', ')}`, prio) : '');
+  const target = p.target
+    .map(
+      t => `<div style="margin-top:7px;font:400 13px/1.55 ${SANS};color:#2a2f4a;">&#9678;&nbsp; ${esc(t.teks)}
+      <span style="font:700 11px ${SANS};color:${t.lewat ? PINK : MUTE};">&nbsp;${esc(t.label)} · ${esc(t.periode)}</span></div>`,
+    )
+    .join('');
+
+  return (target ? kotak(`Target · ${p.target.length} tenggat dekat`, target) : '') + kotak(`Checklist minggu ini · ${p.checklist.length} belum`, checklist) + kotak('Uang', uang) + (prio ? kotak(`Prioritas: ${p.prioritas.map(x => x.nama).join(', ')}`, prio) : '');
 }
 
 export function renderDigestHtml(d: Digest): string {
@@ -510,6 +517,10 @@ export function renderDigestText(d: Digest): string {
 
   if (d.pribadi) {
     const p = d.pribadi;
+    if (p.target.length) {
+      L.push('', `TARGET, TENGGAT DEKAT (${p.target.length})`);
+      p.target.forEach(t => L.push(`  ( ) ${t.teks}  [${t.label} · ${t.periode}]`));
+    }
     L.push('', `CHECKLIST MINGGU INI (${p.checklist.length} belum)`);
     p.checklist.slice(0, 8).forEach(c => L.push(`  [ ] ${c.matkul ? `${c.matkul}: ` : ''}${c.teks}`));
     L.push('', `UANG: kemarin ${rupiah(p.kemarin.keluar)}, bulan ini keluar ${rupiah(p.bulanIni.keluar)}`);

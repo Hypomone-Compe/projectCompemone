@@ -636,7 +636,7 @@ export function removeFokus(id: string) {
 }
 
 /* ---- target ---- */
-export function addTarget(teks: string, periode: Periode, kunci: string, langkah = 1) {
+export function addTarget(teks: string, periode: Periode, kunci: string, langkah = 1, tenggat?: string, jam?: string) {
   const t = teks.trim();
   if (!t) return;
   const h = getHarian();
@@ -647,6 +647,8 @@ export function addTarget(teks: string, periode: Periode, kunci: string, langkah
     kunci,
     langkah: Math.max(1, Math.min(99, langkah)),
     selesai: 0,
+    ...(tenggat ? { tenggat } : {}),
+    ...(jam ? { jam } : {}),
   };
   writeHarian({ ...h, target: [...h.target, baru] });
 }
@@ -659,6 +661,35 @@ export function geserTarget(id: string, delta: number) {
     target: h.target.map(t =>
       t.id === id ? { ...t, selesai: Math.max(0, Math.min(t.langkah, t.selesai + delta)) } : t,
     ),
+  });
+}
+
+/** Mengubah tenggat; string kosong = kembali ke akhir periode / tanpa jam. */
+export function aturTenggat(id: string, tenggat: string, jam: string) {
+  const h = getHarian();
+  writeHarian({
+    ...h,
+    target: h.target.map(t => {
+      if (t.id !== id) return t;
+      const baru: Target = { ...t, tenggat, jam };
+      if (!tenggat) delete baru.tenggat;
+      if (!jam) delete baru.jam;
+      return baru;
+    }),
+  });
+}
+
+/** Memindahkan target harian yang tertinggal ke hari lain (tenggatnya ikut hari itu). */
+export function pindahTargetHarian(id: string, tanggal: string) {
+  const h = getHarian();
+  writeHarian({
+    ...h,
+    target: h.target.map(t => {
+      if (t.id !== id) return t;
+      const baru: Target = { ...t, kunci: tanggal };
+      delete baru.tenggat;
+      return baru;
+    }),
   });
 }
 

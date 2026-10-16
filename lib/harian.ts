@@ -16,7 +16,7 @@ import { addDays, DAY_SHORT, diffDays, mondayOf, parseYmd, todayYmd, ymd } from 
 /** Skala 1–5 dipakai untuk mood dan energi. */
 export type Skala = 1 | 2 | 3 | 4 | 5;
 
-export type Periode = 'pekan' | 'bulan';
+export type Periode = 'hari' | 'pekan' | 'bulan';
 
 export interface Kebiasaan {
   id: string;
@@ -53,11 +53,15 @@ export interface Target {
   id: string;
   teks: string;
   periode: Periode;
-  /** Senin pekan itu ('2026-08-24') atau bulan ('2026-08'). */
+  /** Tanggal itu ('2026-10-16'), Senin pekan itu ('2026-08-24'), atau bulan ('2026-08'). */
   kunci: string;
   /** Jumlah langkah yang harus dilalui supaya target dianggap tuntas. */
   langkah: number;
   selesai: number;
+  /** Batas tanggal 'YYYY-MM-DD'. Kosong = akhir periodenya (target lama tidak punya ini). */
+  tenggat?: string;
+  /** Batas jam 'HH:MM' pada tanggal tenggat, opsional. */
+  jam?: string;
 }
 
 export interface HarianState {
@@ -318,6 +322,61 @@ export const keJam = (menit: number): number => Math.round((menit / 60) * 100) /
 
 export function targetPeriode(s: HarianState, periode: Periode, kunci: string): Target[] {
   return s.target.filter(t => t.periode === periode && t.kunci === kunci);
+}
+
+/** Rentang tanggal sebuah periode: [awal, akhir]. */
+export function rentangPeriode(periode: Periode, kunci: string): [string, string] {
+  if (periode === 'hari') return [kunci, kunci];
+  if (periode === 'pekan') return [kunci, ymd(addDays(parseYmd(kunci), 6))];
+  const hari = hariBulan(kunci);
+  return [hari[0], hari[hari.length - 1]];
+}
+
+/** Tenggat efektif: yang diisi, atau hari terakhir periodenya. */
+export const tenggatTarget = (t: Target): string => t.tenggat || rentangPeriode(t.periode, t.kunci)[1];
+
+export const tuntasTarget = (t: Target): boolean => t.selesai >= Math.max(1, t.langkah);
+
+export type NadaTenggat = 'tuntas' | 'lewat' | 'dekat' | 'aman';
+
+/**
+ * Sisa waktu sebuah target terhadap hari ini. `menitKini` = menit sejak 00.00 WIB,
+ * dipakai bila target punya jam tenggat hari ini.
+ */
+export function statusTenggat(t: Target, hariIni: string, menitKini: number): { label: string; nada: NadaTenggat; sisa: number } {
+  const tgl = tenggatTarget(t);
+  const sisa = diffDays(tgl, hariIni);
+  const pukul = t.jam ? ` ${t.jam.replace(':', '.')}` : '';
+  const tanggal = (() => {
+    const d = parseYmd(tgl);
+    return `${DAY_SHORT[d.getUTCDay()]} ${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
+  })();
+  if (tuntasTarget(t)) return { label: `Tenggat ${tanggal}${pukul}`, nada: 'tuntas', sisa };
+  if (sisa < 0) return { label: `Lewat ${-sisa} hari · ${tanggal}${pukul}`, nada: 'lewat', sisa };
+  if (sisa === 0) {
+    if (t.jam) {
+      const [h, m] = t.jam.split(':').map(Number);
+      const kurang = h * 60 + m - menitKini;
+      if (kurang < 0) return { label: `Lewat jam${pukul}`, nada: 'lewat', sisa };
+      const sisaJam = kurang >= 60 ? `${Math.floor(kurang / 60)} jam lagi` : `${kurang} menit lagi`;
+      return { label: `Hari ini${pukul} · ${sisaJam}`, nada: 'dekat', sisa };
+    }
+    return { label: 'Hari ini', nada: 'dekat', sisa };
+  }
+  if (sisa === 1) return { label: `Besok${pukul}`, nada: 'dekat', sisa };
+  return { label: `${sisa} hari lagi · ${tanggal}${pukul}`, nada: sisa <= 2 ? 'dekat' : 'aman', sisa };
+}
+
+/** Yang belum tuntas dulu, urut tenggat terdekat; yang sudah tuntas di bawah. */
+export function urutTarget(daftar: Target[]): Target[] {
+  const kunciUrut = (t: Target) => `${tuntasTarget(t) ? 1 : 0}|${tenggatTarget(t)}|${t.jam || '99:99'}`;
+  return [...daftar].sort((a, b) => kunciUrut(a).localeCompare(kunciUrut(b)));
+}
+
+/** Target harian tujuh hari terakhir yang belum tuntas, untuk dibawa ke hari ini. */
+export function targetHarianTertinggal(s: HarianState, hariIni: string): Target[] {
+  const batas = ymd(addDays(parseYmd(hariIni), -7));
+  return s.target.filter(t => t.periode === 'hari' && t.kunci < hariIni && t.kunci >= batas && !tuntasTarget(t));
 }
 
 export function progresTarget(t: Target): number {

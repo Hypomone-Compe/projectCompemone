@@ -7,6 +7,7 @@
    ========================================================================== */
 import 'server-only';
 import { COURSES, shortName } from './courses';
+import { statusTenggat, tenggatTarget, tuntasTarget, urutTarget, type HarianState } from './harian';
 import { addDays, mondayOf, parseYmd, ymd } from './kalender';
 import type { Anggaran } from './keuangan';
 import { getAdminSupabase } from './supabase/admin';
@@ -18,6 +19,8 @@ export interface DataPribadi {
   kemarin: { keluar: number; jumlah: number; tanggal: string };
   bulanIni: { keluar: number; masuk: number; anggaran: number };
   prioritas: { nama: string; accent: string; paham: number; total: number }[];
+  /** Target belum tuntas yang tenggatnya hari ini, besok, atau sudah lewat. */
+  target: { teks: string; periode: string; label: string; lewat: boolean }[];
 }
 
 export async function ambilDataPribadi(today: string): Promise<DataPribadi | null> {
@@ -61,7 +64,20 @@ export async function ambilDataPribadi(today: string): Promise<DataPribadi | nul
       };
     });
 
+    /* Target dengan tenggat dekat. Email terkirim 06.00, jadi jam tenggat dihitung dari 06.00. */
+    const harian = (slices.harian || {}) as Partial<HarianState>;
+    const besok = ymd(addDays(parseYmd(today), 1));
+    const NAMA_PERIODE: Record<string, string> = { hari: 'Hari ini', pekan: 'Pekanan', bulan: 'Bulanan' };
+    const target = urutTarget(harian.target || [])
+      .filter(t => !tuntasTarget(t) && tenggatTarget(t) <= besok && (t.periode !== 'hari' || t.kunci === today))
+      .slice(0, 8)
+      .map(t => {
+        const st = statusTenggat(t, today, 6 * 60);
+        return { teks: t.teks, periode: NAMA_PERIODE[t.periode] || t.periode, label: st.label, lewat: st.nada === 'lewat' };
+      });
+
     return {
+      target,
       checklist,
       checklistSelesai: items.filter(i => i.done).length,
       kemarin: { keluar: kemarinRows.reduce((a, r) => a + Number(r.jumlah), 0), jumlah: kemarinRows.length, tanggal: kemarin },

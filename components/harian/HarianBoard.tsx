@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { ChartLine, LayoutDashboard, ListChecks, Moon, NotebookPen, Target as IkonTarget, Timer as IkonTimer } from 'lucide-react';
+import { CalendarClock, ChartLine, LayoutDashboard, ListChecks, Moon, NotebookPen, Target as IkonTarget, Timer as IkonTimer } from 'lucide-react';
 import CourseTabs, { type Tab } from '@/components/course/CourseTabs';
 import { Bar, Kosong, Reveal } from '@/components/kit';
 import { setModeKucing } from '@/lib/maskot';
@@ -9,14 +9,15 @@ import { META, shortName } from '@/lib/courses/meta';
 import {
   bacaKorelasi, catatan, deretHarian, geserBulan, hariBulan, hariPekan, hariTerakhir, jam,
   jurnalTerisi, kebiasaanAktif, konsistensi, korelasi, kunciBulan, kunciPekan, LABEL_ENERGI,
-  LABEL_MOOD, namaBulanHarian, polaHari, progresTarget, rekapPekan, ringkasHari, ringkasTarget,
-  runtun, runtunTerbaik, targetPeriode, tinjauan, totalFokus,
-  type Periode, type Skala,
+  LABEL_MOOD, namaBulanHarian, polaHari, progresTarget, rekapPekan, rentangPeriode, ringkasHari, ringkasTarget,
+  runtun, runtunTerbaik, statusTenggat, targetHarianTertinggal, targetPeriode, tenggatTarget, tinjauan, totalFokus,
+  tuntasTarget, urutTarget,
+  type NadaTenggat, type Periode, type Skala, type Target,
 } from '@/lib/harian';
-import { addDays, fmtDateLong, fmtRange, parseYmd, todayYmd, ymd } from '@/lib/kalender';
+import { addDays, fmtDateLong, fmtRange, parseYmd, todayYmd, TZ, ymd } from '@/lib/kalender';
 import {
-  addFokus, addKebiasaan, addTarget, geserTarget, getHarian, pakaiKebiasaanBawaan, patchKebiasaan,
-  removeFokus, removeKebiasaan, removeTarget, setCatatan, toggleCeklis, useStore,
+  addFokus, addKebiasaan, addTarget, aturTenggat, geserTarget, getHarian, pakaiKebiasaanBawaan, patchKebiasaan,
+  pindahTargetHarian, removeFokus, removeKebiasaan, removeTarget, setCatatan, toggleCeklis, useStore,
 } from '@/lib/store';
 import {
   GrafikFokus, GrafikMood, GrafikPekan, GrafikTidur, KisiPekan, PetaBulan, PolaPekan,
@@ -1156,19 +1157,149 @@ function SeksiTidur({ hariIni }: { hariIni: string }) {
 }
 
 /* ============================== 06 TARGET ============================== */
-function PapanTarget({ periode, kunci, judul, ket }: { periode: Periode; kunci: string; judul: string; ket: string }) {
+
+/** Menit sejak 00.00 WIB, diperbarui tiap menit (untuk tenggat berjam). */
+function useMenitKini() {
+  const baca = () => {
+    const [h, m] = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false })
+      .format(new Date())
+      .split(':')
+      .map(Number);
+    return (h % 24) * 60 + m;
+  };
+  const [menit, setMenit] = useState(baca);
+  useEffect(() => {
+    const id = setInterval(() => setMenit(baca()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  return menit;
+}
+
+const KELAS_NADA: Record<NadaTenggat, string> = {
+  tuntas: 'chip',
+  lewat: 'chip chip--red',
+  dekat: 'chip chip--amber',
+  aman: 'chip',
+};
+
+/** Satu baris target: teks, tenggat (bisa diubah), progres, tombol langkah. */
+function BarisTarget({ t, hariIni, menitKini }: { t: Target; hariIni: string; menitKini: number }) {
+  const p = progresTarget(t);
+  const tuntas = tuntasTarget(t);
+  const st = statusTenggat(t, hariIni, menitKini);
+  const [awal, akhir] = rentangPeriode(t.periode, t.kunci);
+  const [ubah, setUbah] = useState(false);
+  const [tgl, setTgl] = useState(tenggatTarget(t));
+  const [jamU, setJamU] = useState(t.jam || '');
+
+  function simpan(e: FormEvent) {
+    e.preventDefault();
+    aturTenggat(t.id, t.periode === 'hari' || tgl === akhir ? '' : tgl, jamU);
+    setUbah(false);
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <span
+          className="min-w-0 flex-1 text-[0.84rem] font-semibold"
+          style={{ letterSpacing: '-0.01em', textDecoration: tuntas ? 'line-through' : 'none', opacity: tuntas ? 0.55 : 1 }}
+        >
+          {t.teks}
+        </span>
+        <span className="num shrink-0 text-[0.74rem] muted">
+          {t.selesai}/{t.langkah}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setUbah(v => !v)}
+        className={`${KELAS_NADA[st.nada]} mt-1.5 gap-1.5 !px-2.5 !py-[3px] !text-[11.5px]`}
+        style={{ opacity: tuntas ? 0.55 : 1 }}
+        aria-expanded={ubah}
+        aria-label={`Tenggat: ${st.label}. Ketuk untuk mengubah`}
+      >
+        <CalendarClock size={12} aria-hidden />
+        {st.label}
+      </button>
+
+      {ubah && (
+        <form onSubmit={simpan} className="mt-2 flex flex-wrap items-end gap-2">
+          {t.periode !== 'hari' && (
+            <label className="w-[10rem]">
+              <span className="field__label">Tanggal</span>
+              <input type="date" className="input" value={tgl} min={awal} max={akhir} onChange={e => setTgl(e.target.value || akhir)} />
+            </label>
+          )}
+          <label className="w-[7.5rem]">
+            <span className="field__label">Jam (opsional)</span>
+            <input type="time" className="input" value={jamU} onChange={e => setJamU(e.target.value)} />
+          </label>
+          <button type="submit" className="btn btn--c btn--sm">
+            Simpan
+          </button>
+        </form>
+      )}
+
+      <div className="mt-2 flex items-center gap-2">
+        <Bar value={p} className="flex-1" />
+        <button type="button" onClick={() => geserTarget(t.id, -1)} disabled={t.selesai <= 0} className="stepper" aria-label="Kurangi progres">
+          −
+        </button>
+        <button type="button" onClick={() => geserTarget(t.id, 1)} disabled={tuntas} className="stepper" aria-label="Tambah progres">
+          +
+        </button>
+        <button type="button" onClick={() => removeTarget(t.id)} className="stepper" aria-label="Hapus target">
+          ×
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const CONTOH_TARGET: Record<Periode, string> = {
+  hari: 'Kerjakan 2 soal latihan SDA',
+  pekan: 'Selesaikan Tutorial 07',
+  bulan: 'Kuasai normalisasi sampai BCNF',
+};
+
+function PapanTarget({
+  periode,
+  kunci,
+  judul,
+  ket,
+  hariIni,
+  menitKini,
+  children,
+}: {
+  periode: Periode;
+  kunci: string;
+  judul: string;
+  ket: string;
+  hariIni: string;
+  menitKini: number;
+  children?: React.ReactNode;
+}) {
   const s = getHarian();
-  const daftar = targetPeriode(s, periode, kunci);
+  const daftar = urutTarget(targetPeriode(s, periode, kunci));
   const r = ringkasTarget(daftar);
+  const [awal, akhir] = rentangPeriode(periode, kunci);
   const [teks, setTeks] = useState('');
   const [langkah, setLangkah] = useState(1);
+  const [tenggat, setTenggat] = useState(akhir);
+  const [jamT, setJamT] = useState('');
+  const terlewat = daftar.filter(t => statusTenggat(t, hariIni, menitKini).nada === 'lewat').length;
 
   function kirim(e: FormEvent) {
     e.preventDefault();
     if (!teks.trim()) return;
-    addTarget(teks, periode, kunci, langkah);
+    /* Tenggat = akhir periode tidak perlu disimpan: itu memang bawaannya. */
+    addTarget(teks, periode, kunci, langkah, periode !== 'hari' && tenggat !== akhir ? tenggat : undefined, jamT || undefined);
     setTeks('');
     setLangkah(1);
+    setTenggat(akhir);
+    setJamT('');
   }
 
   return (
@@ -1180,57 +1311,40 @@ function PapanTarget({ periode, kunci, judul, ket }: { periode: Periode; kunci: 
         </span>
       </div>
       <p className="mt-1 text-[0.72rem] muted">{ket}</p>
+      {(r.total > 0 || terlewat > 0) && (
+        <p className="mt-1 text-[0.72rem] muted">
+          {r.tuntas}/{r.total} tuntas
+          {terlewat > 0 && <b className="text-red"> · {terlewat} lewat tenggat</b>}
+        </p>
+      )}
+
+      {children}
 
       {daftar.length > 0 && (
         <div className="mt-5 space-y-4">
-          {daftar.map(t => {
-            const p = progresTarget(t);
-            const tuntas = t.selesai >= t.langkah;
-            return (
-              <div key={t.id}>
-                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                  <span
-                    className="min-w-0 flex-1 text-[0.84rem] font-semibold"
-                    style={{ letterSpacing: '-0.01em', textDecoration: tuntas ? 'line-through' : 'none', opacity: tuntas ? 0.55 : 1 }}
-                  >
-                    {t.teks}
-                  </span>
-                  <span className="num shrink-0 text-[0.74rem] muted">
-                    {t.selesai}/{t.langkah}
-                  </span>
-                </div>
-
-                <div className="mt-2 flex items-center gap-2">
-                  <Bar value={p} className="flex-1" />
-                  <button type="button" onClick={() => geserTarget(t.id, -1)} disabled={t.selesai <= 0} className="stepper" aria-label="Kurangi progres">
-                    −
-                  </button>
-                  <button type="button" onClick={() => geserTarget(t.id, 1)} disabled={tuntas} className="stepper" aria-label="Tambah progres">
-                    +
-                  </button>
-                  <button type="button" onClick={() => removeTarget(t.id)} className="stepper" aria-label="Hapus target">
-                    ×
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          {daftar.map(t => (
+            <BarisTarget key={`${t.id}:${t.tenggat || ''}:${t.jam || ''}`} t={t} hariIni={hariIni} menitKini={menitKini} />
+          ))}
         </div>
       )}
 
       <form onSubmit={kirim} className="mt-5 border-t border-[var(--rule)] pt-4">
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="min-w-[10rem] flex-1">
-            <span className="field__label">Target baru</span>
-            <input
-              className="input"
-              value={teks}
-              onChange={e => setTeks(e.target.value)}
-              placeholder={periode === 'pekan' ? 'Selesaikan Tutorial 07' : 'Kuasai normalisasi sampai BCNF'}
-              maxLength={90}
-            />
-          </label>
-          <label className="w-[6.5rem]">
+        <span className="field__label">Target baru</span>
+        <div className="flex gap-2">
+          <input
+            className="input min-w-0 flex-1"
+            value={teks}
+            onChange={e => setTeks(e.target.value)}
+            placeholder={CONTOH_TARGET[periode]}
+            maxLength={90}
+            aria-label="Target baru"
+          />
+          <button type="submit" disabled={!teks.trim()} className="btn btn--c btn--sm shrink-0">
+            Tambah
+          </button>
+        </div>
+        <div className={`mt-2 grid gap-2 ${periode === 'hari' ? 'grid-cols-[3.6rem_minmax(0,1fr)]' : 'grid-cols-[3.6rem_minmax(0,1fr)_6rem]'}`}>
+          <label>
             <span className="field__label">Langkah</span>
             <input
               type="number"
@@ -1241,17 +1355,59 @@ function PapanTarget({ periode, kunci, judul, ket }: { periode: Periode; kunci: 
               onChange={e => setLangkah(Math.max(1, Math.min(30, Number(e.target.value) || 1)))}
             />
           </label>
-          <button type="submit" disabled={!teks.trim()} className="btn btn--c btn--sm">
-            Tambah
-          </button>
+          {periode !== 'hari' && (
+            <label>
+              <span className="field__label">Tenggat</span>
+              <input
+                type="date"
+                className="input"
+                value={tenggat}
+                min={awal > hariIni ? awal : hariIni < akhir ? hariIni : awal}
+                max={akhir}
+                onChange={e => setTenggat(e.target.value || akhir)}
+              />
+            </label>
+          )}
+          <label>
+            <span className="field__label">{periode === 'hari' ? 'Sebelum jam (opsional)' : 'Jam'}</span>
+            <input type="time" className="input" value={jamT} onChange={e => setJamT(e.target.value)} aria-label="Jam tenggat, opsional" />
+          </label>
         </div>
       </form>
 
       {daftar.length === 0 && (
         <p className="mt-3 text-[0.74rem] muted">
-          Belum ada target. Tiga saja sudah cukup, lebih dari itu bukan target lagi tapi daftar keinginan.
+          {periode === 'hari'
+            ? 'Belum ada target hari ini. Pilih satu sampai tiga hal yang membuat hari ini terasa selesai.'
+            : 'Belum ada target. Tiga saja sudah cukup, lebih dari itu bukan target lagi tapi daftar keinginan.'}
         </p>
       )}
+    </div>
+  );
+}
+
+/** Target harian kemarin-kemarin yang belum tuntas: bawa ke hari ini atau lepaskan. */
+function TargetTertinggal({ hariIni }: { hariIni: string }) {
+  const daftar = targetHarianTertinggal(getHarian(), hariIni);
+  if (!daftar.length) return null;
+  return (
+    <div className="mt-4 rounded-[var(--r-md)] border border-[var(--rule)] p-3">
+      <p className="text-[0.72rem] font-bold muted">Belum tuntas dari hari sebelumnya</p>
+      <ul className="mt-2 space-y-2">
+        {daftar.map(t => (
+          <li key={t.id} className="flex flex-wrap items-center gap-2 text-[0.8rem]">
+            <span className="min-w-0 flex-1">
+              {t.teks} <span className="muted">· {fmtDateLong(t.kunci).split(',')[0]}</span>
+            </span>
+            <button type="button" onClick={() => pindahTargetHarian(t.id, hariIni)} className="btn btn--light btn--sm">
+              Bawa ke hari ini
+            </button>
+            <button type="button" onClick={() => removeTarget(t.id)} className="stepper" aria-label="Hapus target">
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -1260,6 +1416,7 @@ function SeksiTarget({ hariIni }: { hariIni: string }) {
   const senin = kunciPekan(hariIni);
   const bulan = kunciBulan(hariIni);
   const hari = hariPekan(hariIni);
+  const menitKini = useMenitKini();
 
   return (
     <>
@@ -1270,18 +1427,32 @@ function SeksiTarget({ hariIni }: { hariIni: string }) {
         lede="Kebiasaan menjaga lantai, target mengangkat langit-langit. Yang satu soal tidak mundur, yang satu lagi soal maju ke sesuatu yang punya batas waktu dan bisa dinyatakan selesai."
       />
 
-      <div className="grid gap-2.5 lg:grid-cols-2">
+      <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+        <PapanTarget
+          periode="hari"
+          kunci={hariIni}
+          judul="Hari ini"
+          ket={`${fmtDateLong(hariIni)}. Hal kecil yang harus beres sebelum tidur.`}
+          hariIni={hariIni}
+          menitKini={menitKini}
+        >
+          <TargetTertinggal hariIni={hariIni} />
+        </PapanTarget>
         <PapanTarget
           periode="pekan"
           kunci={senin}
           judul="Pekan ini"
           ket={`${fmtRange(hari[0], hari[6])}. Target yang bisa tuntas dalam tujuh hari.`}
+          hariIni={hariIni}
+          menitKini={menitKini}
         />
         <PapanTarget
           periode="bulan"
           kunci={bulan}
           judul={namaBulanHarian(bulan)}
           ket="Target yang butuh beberapa pekan, dipecah jadi langkah-langkah."
+          hariIni={hariIni}
+          menitKini={menitKini}
         />
       </div>
     </>

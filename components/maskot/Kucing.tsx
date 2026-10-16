@@ -1,11 +1,13 @@
 'use client';
 
 /**
- * Maskot Hypomonē: kucing hitam voxel (pixel 3D) bermata kuning.
+ * Maskot Hypomonē: kucing hitam voxel (pixel 3D) bermata kuning, berjubah Akatsuki
+ * (hitam, awan merah bergaris putih, kerah tinggi berlapis merah) dan berikat kepala Konoha.
  *
  * Dua perilaku:
  * - 'duduk'  : duduk menyambut (sapaan, login). Kedip, ekor mengibas, kepala ikut kursor.
- * - 'navbar' : hidup di jalur kecil navbar. Jalan bolak-balik, sesekali duduk. Saat mode
+ * - 'navbar' : hidup di pojok halaman. Jalan tegak dua kaki seperti manusia (lengan
+ *              berayun berlawanan dengan kaki), sesekali duduk. Saat mode
  *              'fokus' (timer fokus berjalan) ia ke tengah, membuka laptop, lalu mengetik
  *              serius: mata menyipit, kaki depan mengetik, layar menyinari wajah, piksel kode
  *              beterbangan. Saat timer berhenti laptop ditutup dan ia jalan-jalan lagi.
@@ -34,6 +36,64 @@ function elipsoid(c: V, r: V): V[] {
 
 const halus = (a: number, b: number, k: number) => a + (b - a) * k;
 const jepit = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+
+/* Awan Akatsuki dalam setengah-voxel: R = merah, W = garis putih. */
+const AWAN = ['....WWW.....', '.WWWRRRWWW..', 'WRRRRRRRRRW.', 'WRRRRRRRRRRW', '.WRRRRRRRRRW', '..WWWWWWWWW.'];
+const AWAN_K = AWAN[0].length >> 1;
+const AWAN_B = AWAN.length >> 1;
+/** Huruf pola awan di koordinat permukaan (u melingkar, v tinggi), atau '.' bila polos. */
+function polaAwan(u: number, v: number, awan: [number, number][]) {
+  for (const [u0, v0] of awan) {
+    const k = Math.round(u - u0) + AWAN_K;
+    const b = Math.round(v0 - v) + AWAN_B;
+    if (b >= 0 && b < AWAN.length && k >= 0 && k < AWAN[0].length && AWAN[b][k] !== '.') return AWAN[b][k];
+  }
+  return '.';
+}
+
+/** Lambang daun Konoha di pelat ikat kepala (kanvas, digambar sekali). */
+function gambarPelat() {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 78;
+  const g = c.getContext('2d')!;
+  const gr = g.createLinearGradient(0, 0, 0, c.height);
+  gr.addColorStop(0, '#f2f4f8');
+  gr.addColorStop(0.55, '#c3cad6');
+  gr.addColorStop(1, '#8c95a6');
+  g.fillStyle = gr;
+  g.fillRect(0, 0, c.width, c.height);
+  g.strokeStyle = '#5c6474';
+  g.lineWidth = 5;
+  g.strokeRect(2.5, 2.5, c.width - 5, c.height - 5);
+  g.fillStyle = '#5c6474';
+  for (const [x, y] of [[14, 14], [242, 14], [14, 64], [242, 64]]) g.fillRect(x - 3, y - 3, 6, 6);
+
+  const S = 30;
+  const cx = 124;
+  const cy = 41;
+  g.strokeStyle = '#232835';
+  g.lineWidth = 6;
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+  g.beginPath();
+  /* Spiral berlawanan jarum jam, berakhir di puncaknya… */
+  for (let a = 0; a <= Math.PI * 2.5; a += 0.08) {
+    const r = (S * 0.36 * a) / (Math.PI * 2.5);
+    const x = cx + r * Math.cos(a);
+    const y = cy - r * Math.sin(a);
+    if (a === 0) g.moveTo(x, y);
+    else g.lineTo(x, y);
+  }
+  /* …lalu menyapu jadi daun runcing ke kanan atas, melingkari spiral, dan bertangkai. */
+  g.quadraticCurveTo(cx + S * 0.25, cy - S * 0.62, cx + S * 0.78, cy - S * 0.78);
+  g.quadraticCurveTo(cx + S * 0.75, cy + S * 0.35, cx + S * 0.1, cy + S * 0.62);
+  g.quadraticCurveTo(cx - S * 0.35, cy + S * 0.72, cx - S * 0.58, cy + S * 0.4);
+  g.moveTo(cx - S * 0.5, cy + S * 0.52);
+  g.lineTo(cx - S * 0.9, cy + S * 0.82);
+  g.stroke();
+  return c;
+}
 
 export default function Kucing({
   ukuran,
@@ -119,33 +179,84 @@ export default function Kucing({
       const logoNyala = new THREE.MeshBasicMaterial({ color: 0xff7aa2, toneMapped: false });
       const keyboard = new THREE.MeshStandardMaterial({ color: 0x3a4166, roughness: 0.6 });
       const layar = new THREE.MeshBasicMaterial({ color: 0x8297f0, toneMapped: false });
-      const disposables: { dispose(): void }[] = [kubus, bulu, kuning, hitamPekat, pink, logam, logoNyala, keyboard, layar];
+      const perak = new THREE.MeshStandardMaterial({ color: 0xb9c1cf, roughness: 0.35, metalness: 0.55 });
+      const teksturPelat = new THREE.CanvasTexture(gambarPelat());
+      teksturPelat.colorSpace = THREE.SRGBColorSpace;
+      teksturPelat.anisotropy = 4;
+      const mukaPelat = new THREE.MeshStandardMaterial({ map: teksturPelat, roughness: 0.4, metalness: 0.45 });
+      const disposables: { dispose(): void }[] = [kubus, bulu, kuning, hitamPekat, pink, logam, logoNyala, keyboard, layar, perak, teksturPelat, mukaPelat];
       const geo = (g: T.BufferGeometry) => (disposables.push(g), g);
 
       /* Variasi gelap-terang kecil per kubus: tekstur "pixel". */
-      const hitam = (i: number) => new THREE.Color().setHSL(0.66, 0.15, 0.03 + ((i * 7919) % 5) * 0.006);
-      const voxel = (posisi: V[]) => {
+      const hitam = (_p: V, i: number) => new THREE.Color().setHSL(0.66, 0.15, 0.03 + ((i * 7919) % 5) * 0.006);
+      const MERAH = new THREE.Color(0xc8102e);
+      const PUTIH = new THREE.Color(0xf3efe6);
+      const kain = (i: number) => new THREE.Color().setHSL(0.69, 0.18, 0.062 + ((i * 7919) % 4) * 0.006);
+      const biruIkat = (_p: V, i: number) => new THREE.Color().setHSL(0.63, 0.45, 0.16 + ((i * 31) % 3) * 0.018);
+      /** skala 0.5 = setengah-voxel (posisi dalam satuan setengah), untuk kain yang lebih detail. */
+      const voxel = (posisi: V[], warna: (p: V, i: number) => T.Color = hitam, skala = 1) => {
         const im = new THREE.InstancedMesh(kubus, bulu, posisi.length);
         const o = new THREE.Object3D();
         posisi.forEach((p, i) => {
           o.position.set(p[0], p[1], p[2]);
           o.updateMatrix();
           im.setMatrixAt(i, o.matrix);
-          im.setColorAt(i, hitam(i));
+          im.setColorAt(i, warna(p, i));
         });
+        im.scale.setScalar(skala);
         return im;
       };
-      const kotak = (w: number, h: number, d: number, bahan: T.Material, x = 0, y = 0, z = 0) => {
+      const kotak = (w: number, h: number, d: number, bahan: T.Material | T.Material[], x = 0, y = 0, z = 0) => {
         const m = new THREE.Mesh(geo(new THREE.BoxGeometry(w, h, d)), bahan);
         m.position.set(x, y, z);
         return m;
       };
 
+      /**
+       * Kain berbentuk bebas dalam setengah-voxel. `isi(x, y, z)` dalam satuan biasa;
+       * hanya kulit luarnya yang dibuat. Awan dipetakan melingkar di sekitar sumbu (0, pz).
+       */
+      const jubah = (isi: (x: number, y: number, z: number) => boolean, [a, b]: [V, V], pz: number, R: number, awan: [number, number][]) => {
+        const di = (x: number, y: number, z: number) => isi(x / 2, y / 2, z / 2);
+        const pos: V[] = [];
+        for (let x = a[0]; x <= b[0]; x++)
+          for (let y = a[1]; y <= b[1]; y++)
+            for (let z = a[2]; z <= b[2]; z++)
+              if (di(x, y, z) && !(di(x + 1, y, z) && di(x - 1, y, z) && di(x, y + 1, z) && di(x, y - 1, z) && di(x, y, z + 1) && di(x, y, z - 1)))
+                pos.push([x, y, z]);
+        return voxel(
+          pos,
+          (p, i) => {
+            const c = polaAwan(Math.atan2(p[0], p[2] - pz * 2) * R, p[1], awan);
+            return c === 'R' ? MERAH : c === 'W' ? PUTIH : kain(i);
+          },
+          0.5,
+        );
+      };
+
+      /** Kerah tinggi Akatsuki di sekitar leher: luar hitam, dalam merah. s = skala kepala. */
+      const kerah = (s: number) => {
+        const y0 = -1.4 * s;
+        const y1 = 0.5 * s;
+        const cz = 0.6 * s;
+        const ell = (x: number, y: number, z: number, kurang: number) => {
+          const mekar = 1 + 0.07 * ((y - y0) / (y1 - y0));
+          return (x / (3.85 * s * mekar - kurang)) ** 2 + ((z - cz) / (3.35 * s * mekar - kurang)) ** 2 <= 1;
+        };
+        const pos: V[] = [];
+        for (let x = -9; x <= 9; x++)
+          for (let y = Math.floor(y0 * 2); y <= Math.ceil(y1 * 2); y++)
+            for (let z = -8; z <= 10; z++)
+              if (ell(x / 2, y / 2, z / 2, 0) && !ell(x / 2, y / 2, z / 2, 1)) pos.push([x, y, z]);
+        return voxel(pos, (p, i) => (ell(p[0] / 2, p[1] / 2, p[2] / 2, 0.5) ? MERAH : kain(i)), 0.5);
+      };
+
       /* ---------------- kepala (dipakai kedua pose) ---------------- */
       const kepala = new THREE.Group();
       const isiKepala = elipsoid([0, 2.4, 0.6], [4.3, 3.1, 3.1]);
+      /* Telinga mulai di atas ikat kepala (baris y = 4 dipakai ikat kepala). */
       for (const s of [-1, 1])
-        for (const [x, y] of [[4, 4], [3, 4], [2, 4], [4, 5], [3, 5], [4, 6], [3, 6], [4, 7]] as [number, number][])
+        for (const [x, y] of [[4, 5], [3, 5], [4, 6], [3, 6], [4, 7]] as [number, number][])
           for (const z of [0, 1]) isiKepala.push([s * x, y, z]);
       kepala.add(voxel(isiKepala));
       const depan = (x: number, y: number) => Math.max(...isiKepala.filter(k => k[0] === x && k[1] === y).map(k => k[2]));
@@ -159,14 +270,50 @@ export default function Kucing({
       mata.children.forEach(c => (c.position.y -= 2.5)); // pusat kedip di tengah mata
       kepala.add(mata);
       kepala.add(kotak(0.98, 0.7, 0.3, pink, 0, 1.1, depan(0, 1) + 0.45));
-      kepala.add(kotak(0.9, 0.9, 0.2, pink, -3, 4.5, 1.55), kotak(0.9, 0.9, 0.2, pink, 3, 4.5, 1.55));
+      kepala.add(kotak(0.9, 0.9, 0.2, pink, -3, 5.3, 1.55), kotak(0.9, 0.9, 0.2, pink, 3, 5.3, 1.55));
+
+      /* Ikat kepala Konoha: kain biru melingkari baris y = 4, pelat besi di dahi. */
+      const lapis = new Set(isiKepala.filter(k => k[1] === 4).map(k => `${k[0]},${k[2]}`));
+      const ikat: V[] = [];
+      for (let x = -6; x <= 6; x++)
+        for (let z = -5; z <= 6; z++)
+          if (!lapis.has(`${x},${z}`) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dz]) => lapis.has(`${x + dx},${z + dz}`)))
+            ikat.push([x, 4, z]);
+      kepala.add(voxel(ikat, biruIkat));
+      const dahi = Math.max(...ikat.filter(k => Math.abs(k[0]) <= 1).map(k => k[2]));
+      kepala.add(kotak(3.9, 1.2, 0.26, [perak, perak, perak, perak, mukaPelat, perak], 0, 4, dahi + 0.6));
+      /* Simpul & dua ujung kain di belakang kepala, berkibar saat berjalan. */
+      const tengkuk = Math.min(...ikat.filter(k => k[0] === 0).map(k => k[2]));
+      const simpul = new THREE.Group();
+      simpul.position.set(0, 4, tengkuk - 0.6);
+      simpul.add(voxel([[0, 0, 0]], biruIkat));
+      const ujungKain: T.Group[] = [];
+      for (const s of [-1, 1]) {
+        const g = new THREE.Group();
+        g.position.set(s * 0.45, -0.2, -0.3);
+        g.add(voxel([[0, -0.6, -0.1], [s * 0.15, -1.5, -0.35], [s * 0.3, -2.4, -0.55]], biruIkat, 0.7));
+        simpul.add(g);
+        ujungKain.push(g);
+      }
+      kepala.add(simpul);
 
       /* ---------------- pose duduk ---------------- */
       const duduk = new THREE.Group();
-      duduk.add(voxel(elipsoid([0, 3.4, -0.4], [3.9, 3.6, 3.2])));
+      duduk.add(
+        jubah(
+          (x, y, z) => (x / 3.9) ** 2 + ((y - 3.4) / 3.6) ** 2 + ((z + 0.4) / 3.2) ** 2 <= 1 && y >= -0.25,
+          [[-8, -1, -8], [8, 15, 6]],
+          -0.4,
+          7,
+          [[-6, 6], [7, 10], [-15, 9], [16, 4]],
+        ),
+      );
       const leherDuduk = new THREE.Group();
       leherDuduk.position.set(0, 7.6, 0);
       duduk.add(leherDuduk);
+      const kerahDuduk = kerah(1);
+      kerahDuduk.position.copy(leherDuduk.position);
+      duduk.add(kerahDuduk);
       const cakar: T.Group[] = [];
       for (const s of [-1, 1]) {
         const g = new THREE.Group();
@@ -186,24 +333,58 @@ export default function Kucing({
       ekorDuduk.add(voxel(posEkor));
       duduk.add(ekorDuduk);
 
-      /* ---------------- pose jalan (empat kaki) ---------------- */
-      const jalan = new THREE.Group();
-      jalan.add(voxel(elipsoid([0, 4.4, 0], [2.5, 2.3, 4.4])));
-      const leherJalan = new THREE.Group();
-      leherJalan.position.set(0, 4.9, 3.3);
-      jalan.add(leherJalan);
-      const kaki: T.Group[] = [];
-      for (const [x, z] of [[-1.4, 2.6], [1.4, 2.6], [-1.4, -2.6], [1.4, -2.6]]) {
+      /* ---------------- pose jalan: tegak dua kaki seperti manusia ---------------- */
+      const berdiri = new THREE.Group();
+      const PINGGUL = 2.9;
+      const kakiB: T.Group[] = [];
+      for (const s of [-1, 1]) {
         const g = new THREE.Group();
-        g.position.set(x, 3, z);
-        g.add(voxel([[0, -1, 0], [0, -2, 0], [0, -3, 0]]));
-        jalan.add(g);
-        kaki.push(g);
+        g.position.set(s * 1, PINGGUL, 0);
+        g.add(voxel([[0, -0.8, 0], [0, -1.8, 0], [0, -2.42, 0.75]]));
+        berdiri.add(g);
+        kakiB.push(g);
       }
-      const ekorJalan = new THREE.Group();
-      ekorJalan.position.set(0, 5.4, -4.2);
-      ekorJalan.add(voxel([[0, 0, 0], [0, 1, -1], [0, 2, -1], [0, 3, -1], [0, 4, 0], [0, 5, 0], [0, 6, 1]]));
-      jalan.add(ekorJalan);
+      /* Jubah mengembang ke bawah seperti lonceng, ujungnya di atas mata kaki. */
+      const lebarJubah = (y: number) => {
+        const t = (y - 2) / 5.6;
+        return [3.1 - 0.8 * t, 2.5 - 0.55 * t];
+      };
+      berdiri.add(
+        jubah(
+          (x, y, z) => {
+            if (y < 2 || y > 7.6) return false;
+            const [rx, rz] = lebarJubah(y);
+            return (x / rx) ** 2 + (z / rz) ** 2 <= 1;
+          },
+          [[-7, 4, -6], [7, 16, 6]],
+          0,
+          4.9,
+          [[-5, 7], [5, 11], [-11, 11], [11, 6]],
+        ),
+      );
+      const leherBerdiri = new THREE.Group();
+      leherBerdiri.position.set(0, 8, 0.1);
+      berdiri.add(leherBerdiri);
+      const kerahBerdiri = kerah(0.9);
+      kerahBerdiri.position.copy(leherBerdiri.position);
+      berdiri.add(kerahBerdiri);
+      /* Lengan: lengan jubah hitam, lapisan merah di ujungnya, telapak bulu hitam. */
+      const lengan: T.Group[] = [];
+      for (const s of [-1, 1]) {
+        const g = new THREE.Group();
+        g.position.set(s * 3.1, 6.9, 0);
+        g.rotation.z = s * 0.15;
+        const pos: V[] = [];
+        for (let x = -1; x <= 1; x++) for (let y = -6; y <= -1; y++) for (let z = -1; z <= 1; z++) pos.push([x, y, z]);
+        g.add(voxel(pos, (p, i) => (p[1] === -6 ? MERAH : kain(i)), 0.5));
+        g.add(voxel([[0, -3.65, 0.1]]));
+        berdiri.add(g);
+        lengan.push(g);
+      }
+      const ekorBerdiri = new THREE.Group();
+      ekorBerdiri.position.set(0.6, 2.6, -2.4);
+      ekorBerdiri.add(voxel([[0, 0, 0], [0, 0.3, -1], [0, 1.2, -1.6], [0, 2.2, -1.8], [0, 3.1, -1.5], [0, 3.8, -0.9]]));
+      berdiri.add(ekorBerdiri);
 
       /* ---------------- laptop ---------------- */
       const laptop = new THREE.Group();
@@ -234,15 +415,15 @@ export default function Kucing({
       }
 
       const kucing = new THREE.Group();
-      kucing.add(duduk, jalan, laptop, ...partikel);
+      kucing.add(duduk, berdiri, laptop, ...partikel);
       scene.add(kucing);
 
       let poseJalan = false;
       const pasangPose = (j: boolean) => {
         poseJalan = j;
         duduk.visible = !j;
-        jalan.visible = j;
-        (j ? leherJalan : leherDuduk).add(kepala);
+        berdiri.visible = j;
+        (j ? leherBerdiri : leherDuduk).add(kepala);
         kepala.scale.setScalar(j ? 0.9 : 1);
       };
       pasangPose(false);
@@ -303,7 +484,7 @@ export default function Kucing({
               tujuan = 0;
               keFase('menuju', t);
             }
-            const kecepatan = fase === 'menuju' ? 11 : 6;
+            const kecepatan = fase === 'menuju' ? 8 : 4.6;
             const sisa = tujuan - x;
             arah = Math.sign(sisa) || arah;
             x += Math.sign(sisa) * Math.min(Math.abs(sisa), kecepatan * dt);
@@ -345,24 +526,32 @@ export default function Kucing({
 
         /* --- posisi & arah hadap --- */
         kucing.position.x = x;
-        const hadap = sedangJalan ? arah * 1.05 : sibuk ? 0 : -0.3;
+        const hadap = sedangJalan ? arah * 1.15 : sibuk ? 0 : -0.3;
         kucing.rotation.y = halus(kucing.rotation.y, hadap, 0.12);
-        const langkah = t * 13;
+        /* Langkah manusia: satu putaran = dua langkah. Tubuh paling tinggi saat kaki
+           lurus di bawah (sin = 0), paling rendah saat kedua kaki terbuka. */
+        const langkah = t * (fase === 'menuju' ? 12 : 8.5);
+        const ayun = Math.sin(langkah);
         kucing.position.y = kurangGerak
           ? 0
           : sedangJalan
-            ? Math.abs(Math.sin(langkah)) * 0.35
+            ? (1 - Math.abs(ayun)) * 0.3
             : Math.sin(t * 2) * 0.12 + (1 - masuk) * 3;
 
         /* --- animasi bagian tubuh --- */
         if (sedangJalan) {
-          kaki.forEach((k, i) => (k.rotation.x = Math.sin(langkah + (i === 0 || i === 3 ? 0 : Math.PI)) * 0.65));
-          ekorJalan.rotation.x = -0.2 + Math.sin(t * 6) * 0.15;
-          ekorJalan.rotation.z = Math.sin(t * 4) * 0.25;
-          kepala.rotation.set(Math.sin(langkah * 2) * 0.04, 0, 0);
+          kakiB.forEach((k, i) => (k.rotation.x = (i ? -1 : 1) * ayun * 0.7));
+          lengan.forEach((l, i) => (l.rotation.x = (i ? 1 : -1) * ayun * 0.65));
+          berdiri.rotation.set(0.05, 0, ayun * 0.035);
+          ekorBerdiri.rotation.x = -0.25 + Math.sin(t * 6) * 0.12;
+          ekorBerdiri.rotation.z = Math.sin(t * 4) * 0.28;
+          kepala.rotation.set(Math.cos(langkah * 2) * 0.035, 0, -ayun * 0.03);
+          /* Ujung ikat kepala terbawa angin ke belakang. */
+          ujungKain.forEach((u, i) => (u.rotation.x = -0.75 + Math.sin(t * 11 + i * 1.7) * 0.18));
         } else {
           ekorDuduk.rotation.z = kurangGerak ? 0 : Math.sin(t * (fokus ? 5 : 2.4)) * (fokus ? 0.18 : 0.32);
           ekorDuduk.rotation.y = kurangGerak ? 0 : Math.sin(t * 1.3) * 0.2;
+          ujungKain.forEach((u, i) => (u.rotation.x = kurangGerak ? -0.15 : -0.15 + Math.sin(t * 1.6 + i) * 0.06));
           const tx = sibuk ? (fokus ? 0.22 : 0.1) : arahKursor.y * 0.3;
           const ty = sibuk ? 0 : arahKursor.x * 0.6;
           kepala.rotation.x = halus(kepala.rotation.x, tx, 0.08);

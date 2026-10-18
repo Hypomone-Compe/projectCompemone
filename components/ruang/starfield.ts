@@ -9,18 +9,10 @@
    Kita duduk di meja panjang tengah. Satuan = meter. Kamera menghadap -z.
    ========================================================================== */
 import * as THREE from 'three';
+import type { Adegan, Kualitas } from './adegan';
 import { buatAvatar, type Avatar, type OpsiAvatar } from './avatar';
 import { acakBenih, buatPabrik } from './voxel';
 
-export type Kualitas = 'tinggi' | 'rendah';
-
-export interface Adegan {
-  scene: THREE.Scene;
-  /** Posisi mata kita (duduk). */
-  mata: THREE.Vector3;
-  update(t: number, dt: number, fokus: boolean): void;
-  dispose(): void;
-}
 
 const BUKU = [0x7a2e2e, 0x2f4a6d, 0x3d5c3a, 0xc9b48a, 0x8a5a2b, 0xd6c7a6, 0x5b3a5e, 0xb5832f, 0x1f2c3f, 0x9e4a3a, 0xe8e0cf, 0x4d6b73, 0x6e2a3f, 0xa3a07a];
 const MEJA_KITA_Z = -0.85;
@@ -443,6 +435,8 @@ export function bangunStarfield(kualitas: Kualitas): Adegan {
   return {
     scene,
     mata,
+    teman: avatar.length,
+    paparan: 0.92,
     update(t, dt, fokus) {
       ledBahan.uniforms.uT.value = t;
       sinarLaptop.intensity = fokus ? 0.75 + Math.sin(t * 17) * 0.08 : 0.5;

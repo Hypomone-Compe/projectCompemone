@@ -1,21 +1,23 @@
 'use client';
 
 /**
- * Ruang fokus: sudut pandang orang pertama di perpustakaan 3D satu layar penuh.
- * Kita duduk di meja panjang, si kucing hitam di seberang, teman-teman belajar
- * lain di sekitar. Seret (mouse/jari) atau tombol panah untuk menoleh, roda
+ * Ruang fokus: sudut pandang orang pertama di tempat belajar 3D satu layar penuh
+ * (Starfield Library, Ranu Kumbolo). Kita duduk di meja, si kucing hitam di
+ * seberang, teman-teman belajar lain di sekitar. Jazz tenang + suara sekitar
+ * disintesis langsung di peramban. Seret (mouse/jari) atau tombol panah untuk menoleh, roda
  * mouse / cubit untuk memperbesar. Timer sesi fokus mengambang di bawah dan
  * mencatat sesi ke halaman Harian.
  */
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check, Maximize2, MapPin, Minimize2, Move, SlidersHorizontal, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Check, Headphones, Maximize2, MapPin, Minimize2, Move, Music, SlidersHorizontal, Trees, Volume2 } from 'lucide-react';
 import { META, shortName } from '@/lib/courses/meta';
 import { todayYmd } from '@/lib/kalender';
 import { TEMPAT, tempatDari } from '@/lib/ruang';
 import { addFokus } from '@/lib/store';
 import { cn } from '@/lib/utils';
-import { buatSuara, type Suara } from './suara';
+import type { Adegan, Kualitas } from './adegan';
+import { buatAudio, type Audio } from './audio';
 import { useTimerFokus } from './useTimerFokus';
 
 const PRESET = [25, 50, 90];
@@ -25,26 +27,68 @@ const AKSEN = '#f2c46b';
 
 const jepit = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 
+const PEMBANGUN: Record<string, () => Promise<(k: Kualitas) => Adegan>> = {
+  starfield: () => import('./starfield').then(m => m.bangunStarfield),
+  ranukumbolo: () => import('./ranukumbolo').then(m => m.bangunRanuKumbolo),
+};
+
+/* Pilihan suara diingat per perangkat. Musik baru berbunyi setelah sentuhan pertama
+   (aturan autoplay peramban). */
+const KUNCI_AUDIO = 'hypomone.ruang.audio.v1';
+interface PrefAudio {
+  musik: boolean;
+  sekitar: boolean;
+  vMusik: number;
+  vSekitar: number;
+}
+const PREF_AWAL: PrefAudio = { musik: true, sekitar: true, vMusik: 0.55, vSekitar: 0.45 };
+const bacaPref = (): PrefAudio => {
+  try {
+    return { ...PREF_AWAL, ...JSON.parse(localStorage.getItem(KUNCI_AUDIO) || '{}') };
+  } catch {
+    return PREF_AWAL;
+  }
+};
+
 export default function RuangFokus() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fokusRef = useRef(false);
-  const suara = useRef<Suara | null>(null);
+  const audio = useRef<Audio | null>(null);
   const [siap, setSiap] = useState(false);
   const [gagal, setGagal] = useState(false);
   const [petunjuk, setPetunjuk] = useState(true);
-  const [suaraNyala, setSuaraNyala] = useState(false);
+  const [pref, setPref] = useState<PrefAudio>(PREF_AWAL);
+  const [audioHidup, setAudioHidup] = useState(false);
+  const [panelSuara, setPanelSuara] = useState(false);
+  const [tempatId, setTempatId] = useState<string | null>(null);
+  const [teman, setTeman] = useState(0);
   const [penuh, setPenuh] = useState(false);
   const [bisaPenuh, setBisaPenuh] = useState(false);
   const [diam, setDiam] = useState(false);
   const [atur, setAtur] = useState(false);
   const [pilihTempat, setPilihTempat] = useState(false);
   const [pesan, setPesan] = useState<string | null>(null);
-  const tempat = tempatDari('starfield');
+  const tempat = tempatDari(tempatId);
+
+  /* Tempat dari URL (?tempat=ranukumbolo), dibaca setelah mount. */
+  useEffect(() => {
+    setTempatId(tempatDari(new URLSearchParams(window.location.search).get('tempat')).id);
+    setPref(bacaPref());
+  }, []);
+  const pindahTempat = (id: string) => {
+    setPilihTempat(false);
+    if (id === tempatId) return;
+    setSiap(false);
+    setGagal(false);
+    setTeman(0);
+    setTempatId(id);
+    window.history.replaceState(null, '', `/fokus?tempat=${id}`);
+  };
 
   const selesai = useCallback(
     (menit: number, cid: string, label: string) => {
       addFokus({ tanggal: todayYmd(), menit, cid: cid || null, label: label.trim() || `Ruang fokus · ${tempat.nama}` });
-      suara.current?.denting();
+      audio.current?.denting();
       setPesan(`Sesi ${menit} menit tercatat di Harian`);
     },
     [tempat.nama],
@@ -61,14 +105,14 @@ export default function RuangFokus() {
   /* ---------------- adegan 3D ---------------- */
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !tempatId) return;
     let batal = false;
     let bersihkan = () => {};
 
     (async () => {
       const THREE = await import('three');
-      const [{ bangunStarfield }, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }] = await Promise.all([
-        import('./starfield'),
+      const [bangun, { EffectComposer }, { RenderPass }, { UnrealBloomPass }, { OutputPass }] = await Promise.all([
+        (PEMBANGUN[tempatId] ?? PEMBANGUN.starfield)(),
         import('three/examples/jsm/postprocessing/EffectComposer.js'),
         import('three/examples/jsm/postprocessing/RenderPass.js'),
         import('three/examples/jsm/postprocessing/UnrealBloomPass.js'),
@@ -88,11 +132,12 @@ export default function RuangFokus() {
       let dpr = Math.min(window.devicePixelRatio || 1, kualitas === 'tinggi' ? 1.75 : 1.3);
       renderer.setPixelRatio(dpr);
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 0.92;
       renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-      const adegan = bangunStarfield(kualitas);
-      const kamera = new THREE.PerspectiveCamera(62, 1, 0.05, 400);
+      const adegan = bangun(kualitas);
+      renderer.toneMappingExposure = adegan.paparan ?? 0.92;
+      setTeman(adegan.teman);
+      const kamera = new THREE.PerspectiveCamera(62, 1, 0.05, 1500);
       kamera.rotation.order = 'YXZ';
       kamera.position.copy(adegan.mata);
 
@@ -106,7 +151,7 @@ export default function RuangFokus() {
 
       /* --- arah pandang --- */
       let yaw = 0;
-      let pitch = -0.13;
+      let pitch = adegan.pitchAwal ?? -0.13;
       let tYaw = yaw;
       let tPitch = pitch;
       let zoom = 0;
@@ -257,11 +302,54 @@ export default function RuangFokus() {
       batal = true;
       bersihkan();
     };
+  }, [tempatId]);
+
+  /* ---------------- suara ---------------- */
+  useEffect(() => {
+    audio.current = buatAudio();
+    return () => audio.current?.tutup();
   }, []);
+  useEffect(() => {
+    audio.current?.aturGaya(tempat.musik);
+  }, [tempat.musik]);
+  /* Sentuhan pertama menghidupkan suara sesuai pilihan tersimpan. */
+  useEffect(() => {
+    if (audioHidup) return;
+    const hidupkan = () => {
+      const p = bacaPref();
+      audio.current?.aturGaya(tempat.musik);
+      audio.current?.aturVolume('musik', p.vMusik);
+      audio.current?.aturVolume('sekitar', p.vSekitar);
+      if (p.musik) audio.current?.aturMusik(true);
+      if (p.sekitar) audio.current?.aturSekitar(true);
+      setAudioHidup(true);
+    };
+    window.addEventListener('pointerdown', hidupkan, { once: true });
+    window.addEventListener('keydown', hidupkan, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', hidupkan);
+      window.removeEventListener('keydown', hidupkan);
+    };
+  }, [audioHidup, tempat.musik]);
+  const ubahPref = (ubah: Partial<PrefAudio>) => {
+    const p = { ...pref, ...ubah };
+    setPref(p);
+    try {
+      localStorage.setItem(KUNCI_AUDIO, JSON.stringify(p));
+    } catch {
+      /* tidak tersimpan, tetap berlaku untuk sesi ini */
+    }
+    const a = audio.current;
+    if (!a) return;
+    if ('vMusik' in ubah) a.aturVolume('musik', p.vMusik);
+    if ('vSekitar' in ubah) a.aturVolume('sekitar', p.vSekitar);
+    if ('musik' in ubah) a.aturMusik(p.musik);
+    if ('sekitar' in ubah) a.aturSekitar(p.sekitar);
+    setAudioHidup(true);
+  };
 
   /* ---------------- HUD ---------------- */
   useEffect(() => {
-    suara.current = buatSuara();
     setBisaPenuh(!!document.documentElement.requestFullscreen);
     const ubahPenuh = () => setPenuh(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', ubahPenuh);
@@ -269,7 +357,6 @@ export default function RuangFokus() {
     return () => {
       document.removeEventListener('fullscreenchange', ubahPenuh);
       window.clearTimeout(t);
-      suara.current?.tutup();
     };
   }, []);
 
@@ -322,21 +409,18 @@ export default function RuangFokus() {
     return () => window.clearTimeout(id);
   }, [pesan]);
 
-  const gantiSuara = () => {
-    if (suaraNyala) suara.current?.matikan();
-    else suara.current?.nyalakan();
-    setSuaraNyala(!suaraNyala);
-  };
   const gantiPenuh = () => {
     if (document.fullscreenElement) void document.exitFullscreen();
     else void document.documentElement.requestFullscreen?.().catch(() => {});
   };
 
-  const redup = diam && !atur && !pilihTempat;
+  const redup = diam && !atur && !pilihTempat && !panelSuara;
+  const bunyi = audioHidup && (pref.musik || pref.sekitar);
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-[#0d0a0c] text-ink" style={{ '--c': AKSEN, '--c-on': '#1a1306' } as React.CSSProperties}>
+    <div className="fixed inset-0 overflow-hidden text-ink" style={{ '--c': AKSEN, '--c-on': '#1a1306', background: tempat.latar } as React.CSSProperties}>
       <canvas
+        key={tempatId ?? 'awal'}
         ref={canvasRef}
         className="absolute inset-0 block h-full w-full cursor-grab touch-none select-none active:cursor-grabbing"
         role="img"
@@ -346,14 +430,15 @@ export default function RuangFokus() {
       {/* Layar muat */}
       <div
         className={cn(
-          'pointer-events-none absolute inset-0 grid place-items-center bg-[#0d0a0c] transition-opacity duration-700',
+          'pointer-events-none absolute inset-0 grid place-items-center transition-opacity duration-700',
           siap || gagal ? 'opacity-0' : 'opacity-100',
         )}
+        style={{ background: tempat.latar }}
         aria-hidden={siap}
       >
         <div className="text-center">
           <div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-[rgba(242,196,107,0.25)] border-t-[#f2c46b]" />
-          <p className="mt-4 text-[13px] font-semibold text-secondary">Menata rak buku {tempat.nama}…</p>
+          <p className="mt-4 text-[13px] font-semibold text-secondary">{tempat.muat}</p>
         </div>
       </div>
       {gagal && (
@@ -373,16 +458,77 @@ export default function RuangFokus() {
           </Link>
           <div className={cn(KACA, 'min-w-0 rounded-full px-4 py-2')}>
             <p className="truncate text-[13px] font-bold leading-tight">{tempat.nama}</p>
-            <p className="truncate text-[11px] leading-tight text-secondary">{tempat.lokasi} · belajar bareng 19 teman</p>
+            <p className="truncate text-[11px] leading-tight text-secondary">{tempat.lokasi}{teman ? ` · belajar bareng ${teman} teman` : ''}</p>
           </div>
         </div>
         <div className="pointer-events-auto relative flex shrink-0 gap-2">
-          <button type="button" className={TOMBOL_IKON} onClick={() => setPilihTempat(v => !v)} aria-expanded={pilihTempat} aria-label="Pilih tempat">
+          <button
+            type="button"
+            className={TOMBOL_IKON}
+            onClick={() => {
+              setPilihTempat(v => !v);
+              setPanelSuara(false);
+            }}
+            aria-expanded={pilihTempat}
+            aria-label="Pilih tempat"
+          >
             <MapPin size={18} />
           </button>
-          <button type="button" className={TOMBOL_IKON} onClick={gantiSuara} aria-pressed={suaraNyala} aria-label={suaraNyala ? 'Matikan suara ruangan' : 'Nyalakan suara ruangan'}>
-            {suaraNyala ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          <button
+            type="button"
+            className={cn(TOMBOL_IKON, bunyi && 'text-[#f7d58e]')}
+            onClick={() => {
+              setPanelSuara(v => !v);
+              setPilihTempat(false);
+            }}
+            aria-expanded={panelSuara}
+            aria-label="Musik dan suara"
+          >
+            <Headphones size={18} />
           </button>
+
+          {panelSuara && (
+            <div className={cn(KACA, 'absolute right-0 top-[3.25rem] w-[min(18.5rem,calc(100vw-2rem))] space-y-3 rounded-2xl p-4')}>
+              {(
+                [
+                  { kunci: 'musik', vol: 'vMusik', Ikon: Music, judul: 'Musik jazz', ket: tempat.musik === 'gunung' ? 'Gitar akustik, bas, brush, seruling' : 'Electric piano, bas betot, brush, vibrafon' },
+                  { kunci: 'sekitar', vol: 'vSekitar', Ikon: tempat.musik === 'gunung' ? Trees : Volume2, judul: 'Suara sekitar', ket: tempat.musik === 'gunung' ? 'Angin, riak air, kicau burung' : 'Dengung ruang baca, halaman dibalik' },
+                ] as const
+              ).map(({ kunci, vol, Ikon, judul, ket }) => (
+                <div key={kunci}>
+                  <div className="flex items-center gap-3">
+                    <Ikon size={17} className="shrink-0 text-[#f2c46b]" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-bold leading-tight">{judul}</p>
+                      <p className="text-[11px] leading-tight text-secondary">{ket}</p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={pref[kunci]}
+                      aria-label={judul}
+                      onClick={() => ubahPref({ [kunci]: !pref[kunci] })}
+                      className={cn('relative h-6 w-11 shrink-0 rounded-full transition-colors', pref[kunci] ? 'bg-[#f2c46b]' : 'bg-[rgba(238,240,251,0.2)]')}
+                    >
+                      <span className={cn('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left]', pref[kunci] ? 'left-[1.375rem]' : 'left-0.5')} />
+                    </button>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={pref[vol]}
+                    onChange={e => ubahPref({ [vol]: Number(e.target.value) })}
+                    disabled={!pref[kunci]}
+                    aria-label={`Volume ${judul.toLowerCase()}`}
+                    className="mt-2 w-full accent-[#f2c46b] disabled:opacity-40"
+                  />
+                </div>
+              ))}
+              {!audioHidup && <p className="text-[11px] text-secondary">Suara mulai setelah kamu menyentuh layar atau menekan tombol.</p>}
+            </div>
+          )}
           {bisaPenuh && (
             <button type="button" className={TOMBOL_IKON} onClick={gantiPenuh} aria-label={penuh ? 'Keluar dari layar penuh' : 'Layar penuh'}>
               {penuh ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
@@ -398,7 +544,7 @@ export default function RuangFokus() {
                   role="menuitemradio"
                   aria-checked={t.id === tempat.id}
                   disabled={!t.siap}
-                  onClick={() => setPilihTempat(false)}
+                  onClick={() => pindahTempat(t.id)}
                   className="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors enabled:hover:bg-[rgba(238,240,251,0.08)] disabled:opacity-45"
                 >
                   <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center">{t.id === tempat.id && <Check size={15} className="text-[#f2c46b]" />}</span>

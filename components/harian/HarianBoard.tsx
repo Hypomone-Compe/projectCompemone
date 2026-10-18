@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { CalendarClock, ChartLine, LayoutDashboard, ListChecks, Moon, NotebookPen, Target as IkonTarget, Timer as IkonTimer } from 'lucide-react';
 import CourseTabs, { type Tab } from '@/components/course/CourseTabs';
@@ -903,6 +904,10 @@ function Timer({ onSelesai }: { onSelesai: (menit: number) => void }) {
           </button>
         )}
       </div>
+
+      <Link href="/fokus" className="btn btn--c btn--sm mt-4 w-full justify-center">
+        Masuk ruang fokus 3D · Starfield Library
+      </Link>
 
       <p className="mt-4 text-[0.72rem] leading-relaxed" style={{ color: 'rgba(243,240,231,0.62)' }}>
         Sesi yang selesai langsung tercatat memakai mata kuliah dan label yang dipilih di sebelah.

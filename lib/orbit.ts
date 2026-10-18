@@ -2,7 +2,7 @@
    Isi orbit beranda: lima matkul + halaman + tautan luar.
 
    Tiap item muncul SEKALI; hanya matkul prioritas (SDA, PBP,
-   Basdat) yang boleh muncul dua kali untuk mengisi slot sisa. Dulu 20
+   Basdat, sesuai urutan) yang boleh muncul dua kali untuk mengisi slot sisa. Dulu 20
    kartu diisi 5 matkul, jadi tiap matkul berulang empat kali.
    ========================================================================== */
 import type { ItemOrbit } from './kartu';
@@ -33,6 +33,7 @@ export function itemOrbit(matkul: KartuMatkul[]): ItemOrbit[] {
   const halaman: ItemOrbit[] = [
     { id: 'keuangan', jenis: 'halaman', judul: 'KEUANGAN', sub: 'Arus kas, anggaran, investasi', warna: '#2fae74', info: 'Catat & pantau uang', pita: 'Halaman', href: '/keuangan' },
     { id: 'scan', jenis: 'halaman', judul: 'SCAN', sub: 'Foto struk jadi transaksi', warna: '#e8628a', info: 'OCR struk', pita: 'Aksi cepat', href: '/keuangan?scan=1' },
+    { id: 'fokus', jenis: 'halaman', judul: 'FOKUS', sub: 'Belajar bareng di Starfield Library', warna: '#f2c46b', info: 'Ruang fokus 3D', pita: 'Halaman', href: '/fokus' },
     { id: 'harian', jenis: 'halaman', judul: 'HARIAN', sub: 'Kebiasaan, jurnal, jam fokus', warna: '#8297f0', info: 'Isi tiap hari', pita: 'Halaman', href: '/harian' },
     { id: 'asdos', jenis: 'halaman', judul: 'ASDOS', sub: 'Aljabar Linear Kelas Internasional', warna: '#5fc4d9', info: 'Sesi, materi, tugas', pita: 'Halaman', href: '/asdos' },
   ];

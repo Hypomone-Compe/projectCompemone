@@ -11,13 +11,14 @@ halaman harian, dan asdos dibawa apa adanya. Yang berubah:
 | | Sandbox | Hypomonē @LV |
 |---|---|---|
 | Tampilan | editorial-brutalist krem | struktur design system Kabinet TerusTerang (`bemuidev/designsystem/companyprofile`) dalam **tema gelap luar angkasa**: nila gelap, pink, Plus Jakarta Sans, navbar kaca |
-| Beranda | hero teks | hero orbit 3D: **galaksi Andromeda** dari partikel di tengah, 13 kartu (5 matkul, Keuangan, Scan, Harian, Asdos, SCeLE, SLCM, Cosmic, NotebookLM) berputar di atas grid & bintang |
+| Beranda | hero teks | hero orbit 3D: **galaksi Andromeda** dari partikel di tengah, 14 kartu (5 matkul, Keuangan, Scan, Fokus, Harian, Asdos, SCeLE, SLCM, Cosmic, NotebookLM) berputar di atas grid & bintang |
 | Klik kartu | (tidak ada) | panel matkul fungsional: kelas berikutnya, agenda terdekat, proyeksi nilai, pemahaman, minggu ini/depan, 6 pintasan |
 | Halaman matkul | 7 seksi digulir panjang | 6 tab (Ringkasan, Nilai, Rencana, Materi, Strategi, Sumber), bisa dibuka langsung `?tab=nilai` |
 | Data | localStorage per perangkat | **Supabase**, sinkron laptop ⇄ HP (realtime), tetap jalan luring |
 | Login | kata sandi di env | **Supabase Auth**, satu email saja, tanpa pendaftaran |
 | Email | Senin, Rabu, Jumat | **setiap hari 06.00 WIB**, plus checklist, uang kemarin, progres SDA, PBP & Basdat |
 | Keuangan | catat manual | **scan struk (OCR)**, anggaran bulanan & per kategori, edit/hapus, cari & saring |
+| Fokus | timer di halaman harian | juga **ruang fokus 3D** (`/fokus`): sudut pandang orang pertama di Starfield Library, Seoul, belajar bareng si kucing hitam dan 18 teman voxel; seret untuk menoleh, sesi tercatat ke Harian |
 | HP | menu | tab bawah: Beranda · Matkul · Scan · Harian · Uang |
 
 **Stack:** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind 3 + cva (sama dengan design system) ·
@@ -81,7 +82,7 @@ RLS `is_owner()` di setiap tabel & bucket · trigger `auth.users` menolak pembua
 
 ### Kartu orbit ([`lib/kartu.ts`](lib/kartu.ts), [`lib/orbit.ts`](lib/orbit.ts))
 
-Tiap item jadi satu "planet" yang digambar di canvas (warna item, minggu berjalan). Setiap item tampil sekali; hanya SDA, PBP, dan Basdat yang muncul dua kali (`ITEM_GANDA`). **Untuk mengganti dengan gambar sendiri:**
+Tiap item jadi satu "planet" yang digambar di canvas (warna item, minggu berjalan). Setiap item tampil sekali; sisa slot diisi matkul prioritas sesuai urutan `ITEM_GANDA` (SDA, PBP, Basdat). **Untuk mengganti dengan gambar sendiri:**
 taruh gambar rasio 1.4:1.9 di `public/images/matkul/sda.png`, lalu isi `cover: '/images/matkul/sda.png'`
 di [`lib/courses/meta.ts`](lib/courses/meta.ts). Galaksi 3D di tengah dibuat dari partikel di [`components/home/orbit/galaxy.ts`](components/home/orbit/galaxy.ts).
 

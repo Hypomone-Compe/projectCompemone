@@ -16,8 +16,8 @@ import type { OrbitController, Quad } from './orbit/scene';
 const loadDetail = () => import('./CourseDetail');
 const CourseDetail = dynamic(() => loadDetail().then(m => m.default), { ssr: false });
 
-/* 4 baris × 4 kartu = 16 slot untuk 13 item: tiap item tampil sekali,
-   hanya SDA, PBP, dan Basdat yang muncul dua kali. */
+/* 4 baris × 4 kartu = 16 slot untuk 14 item: tiap item tampil sekali,
+   sisa slot diisi matkul prioritas (SDA, lalu PBP). */
 const HERO = {
   rings: 4,
   cardsPerRing: 4,

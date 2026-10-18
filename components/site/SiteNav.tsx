@@ -18,6 +18,7 @@ import SyncBadge from './SyncBadge';
 const LINKS = [
   { label: 'Beranda', href: '/' },
   { label: 'Harian', href: '/harian' },
+  { label: 'Ruang fokus 3D', href: '/fokus' },
   { label: 'Keuangan', href: '/keuangan' },
   { label: 'Asdos', href: '/asdos' },
 ];

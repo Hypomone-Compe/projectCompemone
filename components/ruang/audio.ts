@@ -1,18 +1,21 @@
 /* ==========================================================================
    Suara ruang fokus, semuanya disintesis (tanpa berkas audio).
 
-   Musik: jazz generatif yang tenang. Progresi akor berulang 8 birama, tiap
-   birama diisi ulang secara acak sehingga tidak pernah persis sama.
-   - 'perpus' (Starfield): trio lo-fi, electric piano (Rhodes FM + tremolo),
-     bas betot walking, ride & brush, vibrafon sesekali, desis piringan hitam.
-   - 'gunung' (Ranu Kumbolo): gitar akustik petik (Karplus-Strong), bas
-     setengah-nada, brush & shaker lembut, seruling sesekali. Lebih lambat.
+   Musik: jazz generatif yang tenang. Progresi 8 birama, tiap birama diisi
+   ulang secara acak sehingga tidak pernah persis sama.
+   - 'perpus' (Starfield): electric piano lembut, bas, brush, vibrafon sesekali.
+   - 'gunung' (Ranu Kumbolo): gitar petik, bas, shaker halus, seruling sesekali.
+
+   Semua instrumen dibangun dari gelombang sinus (aditif) dengan amplop halus.
+   Sengaja TANPA lingkar umpan balik (DelayNode dalam siklus dijepit minimal
+   128 sampel oleh Web Audio, nada tinggi jadi sumbang) dan tanpa gelombang
+   kotak. Keluaran musik melewati lowpass hangat sebelum kompresor.
 
    Suara sekitar: dengung ruang + halaman dibalik (perpus); angin, riak air,
    dan kicau burung (gunung).
 
-   Penjadwal memakai jam AudioContext dengan lookahead panjang supaya tetap
-   mulus ketika tab di latar belakang (setInterval melambat ke 1 detik).
+   `buatMesinMusik` bisa dijalankan di OfflineAudioContext untuk diuji
+   (puncak, kenyaringan, kekasaran) tanpa harus mendengarkan.
    ========================================================================== */
 
 export type GayaMusik = 'perpus' | 'gunung';
@@ -28,14 +31,14 @@ export interface Audio {
 }
 
 interface Akor {
-  /** Nada bas (MIDI). */
+  /** Nada akar bas (MIDI). */
   b: number;
   /** Voicing tangan kanan (MIDI). */
   v: number[];
 }
 
 const PROGRESI: Record<GayaMusik, Akor[]> = {
-  /* F mayor: Gm9 C13 Fmaj9 Dm9 | Bbmaj7 Am7 Gm9 C13sus */
+  /* F mayor: Gm9 C13 Fmaj9 Dm9 | Bbmaj7 Am7 Gm9 C9sus */
   perpus: [
     { b: 43, v: [58, 62, 65, 69] },
     { b: 36, v: [58, 62, 64, 69] },
@@ -44,97 +47,275 @@ const PROGRESI: Record<GayaMusik, Akor[]> = {
     { b: 46, v: [57, 62, 65, 69] },
     { b: 45, v: [55, 60, 64, 67] },
     { b: 43, v: [58, 62, 65, 69] },
-    { b: 36, v: [58, 62, 65, 69] },
+    { b: 36, v: [58, 62, 65, 67] },
   ],
-  /* D mayor, terbuka: Dmaj9 Bm11 Gmaj9 A13sus | Em9 F#m7 Gmaj7#11 A7sus4 */
+  /* D mayor, terbuka: Dmaj9 Bm7 Gmaj9 Asus | Em9 F#m7 Gmaj7 A7sus */
   gunung: [
     { b: 38, v: [54, 57, 61, 64] },
-    { b: 35, v: [57, 62, 64, 66] },
+    { b: 35, v: [54, 57, 62, 66] },
     { b: 43, v: [54, 57, 59, 62] },
-    { b: 45, v: [55, 59, 62, 66] },
+    { b: 45, v: [52, 57, 62, 64] },
     { b: 40, v: [55, 59, 62, 66] },
     { b: 42, v: [52, 57, 61, 64] },
-    { b: 43, v: [54, 59, 61, 66] },
-    { b: 45, v: [55, 59, 62, 64] },
+    { b: 43, v: [54, 59, 62, 66] },
+    { b: 45, v: [55, 57, 62, 64] },
   ],
 };
-const TEMPO: Record<GayaMusik, number> = { perpus: 70, gunung: 62 };
-const AYUN = 0.64; // swing: ketukan "and" jatuh di 64% ketukan
+export const TEMPO: Record<GayaMusik, number> = { perpus: 72, gunung: 66 };
+const AYUN = 0.62;
 
 const hz = (m: number) => 440 * 2 ** ((m - 69) / 12);
-const pilih = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
+const pilih = <T,>(a: T[]): T => a[Math.floor(Math.random() * a.length)];
 
+/** Nada `m` digeser per oktaf supaya berada di rentang [lo, hi]. */
+const keRentang = (m: number, lo: number, hi: number) => {
+  let n = m;
+  while (n > hi) n -= 12;
+  while (n < lo) n += 12;
+  return n;
+};
+
+/* ======================================================================
+   Mesin musik: instrumen + penyusun birama. Bekerja di AudioContext apa
+   pun (juga OfflineAudioContext), keluar ke `tujuan`.
+   ====================================================================== */
+export function buatMesinMusik(ctx: BaseAudioContext, tujuan: AudioNode) {
+  /* Gema lembut. */
+  const panjang = Math.floor(ctx.sampleRate * 2.4);
+  const ir = ctx.createBuffer(2, panjang, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = ir.getChannelData(ch);
+    for (let i = 0; i < panjang; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / panjang, 3);
+  }
+  const gema = ctx.createConvolver();
+  gema.buffer = ir;
+  const basah = ctx.createGain();
+  basah.gain.value = 0.18;
+  gema.connect(basah).connect(tujuan);
+  const kering = ctx.createGain();
+  kering.gain.value = 1;
+  kering.connect(tujuan);
+  kering.connect(gema);
+
+  /* Jalur piano & vibrafon: tremolo tipis + lowpass. */
+  const tremolo = ctx.createGain();
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = 4.4;
+  const lfoG = ctx.createGain();
+  lfoG.gain.value = 0.05;
+  lfo.connect(lfoG).connect(tremolo.gain);
+  lfo.start();
+  const pianoLp = ctx.createBiquadFilter();
+  pianoLp.type = 'lowpass';
+  pianoLp.frequency.value = 2200;
+  pianoLp.Q.value = 0.5;
+  tremolo.connect(pianoLp).connect(kering);
+
+  const derau = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+  const dd = derau.getChannelData(0);
+  for (let i = 0; i < dd.length; i++) dd[i] = Math.random() * 2 - 1;
+
+  /** Satu suara aditif: daftar [kelipatan frekuensi, amplitudo, lama luruh (s)]. */
+  const aditif = (t: number, f: number, puncak: number, parsial: [number, number, number][], lepas: number, keluar: AudioNode, serang = 0.005) => {
+    const akhir = t + Math.max(...parsial.map(p => p[2])) + 0.1;
+    for (const [k, a, luruh] of parsial) {
+      if (f * k > 12000) continue;
+      const o = ctx.createOscillator();
+      o.frequency.value = f * k;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(puncak * a, t + serang);
+      g.gain.setTargetAtTime(0, t + serang, luruh / 4);
+      if (lepas < akhir) g.gain.setTargetAtTime(0, lepas, 0.12);
+      o.connect(g).connect(keluar);
+      o.start(t);
+      o.stop(Math.min(akhir, lepas + 0.8));
+    }
+  };
+
+  const piano = (t: number, m: number, vel: number, dur: number) =>
+    aditif(t, hz(m), 0.045 * vel, [[1, 1, 3.2], [2, 0.25, 1.4], [3, 0.06, 0.6], [7, 0.035, 0.08]], t + dur, tremolo, 0.006);
+
+  const vibrafon = (t: number, m: number, vel: number) =>
+    aditif(t, hz(m), 0.04 * vel, [[1, 1, 2.8], [4, 0.12, 0.35]], t + 3, tremolo, 0.004);
+
+  const gitar = (t: number, m: number, vel: number) => {
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(3200, t);
+    lp.frequency.exponentialRampToValueAtTime(1100, t + 0.35);
+    lp.connect(kering);
+    aditif(t, hz(m), 0.042 * vel, [[1, 1, 2.4], [2, 0.42, 1.3], [3, 0.2, 0.7], [4, 0.09, 0.4], [5, 0.04, 0.25]], t + 2.6, lp, 0.003);
+  };
+
+  const bas = (t: number, m: number, vel: number, dur: number) => {
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 520;
+    lp.connect(kering);
+    aditif(t, hz(m), 0.16 * vel, [[1, 1, 2.2], [2, 0.3, 0.8]], t + dur, lp, 0.012);
+  };
+
+  const seruling = (t: number, m: number, vel: number, dur: number) => {
+    const f = hz(m);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.03 * vel, t + 0.14);
+    g.gain.setTargetAtTime(0, t + dur, 0.2);
+    g.connect(kering);
+    const vib = ctx.createOscillator();
+    vib.frequency.value = 4.8;
+    const vibG = ctx.createGain();
+    vibG.gain.setValueAtTime(0, t);
+    vibG.gain.linearRampToValueAtTime(f * 0.004, t + 0.4);
+    vib.connect(vibG);
+    for (const [k, a] of [[1, 1], [2, 0.12]] as const) {
+      const o = ctx.createOscillator();
+      o.frequency.value = f * k;
+      vibG.connect(o.frequency);
+      const og = ctx.createGain();
+      og.gain.value = a;
+      o.connect(og).connect(g);
+      o.start(t);
+      o.stop(t + dur + 1.2);
+    }
+    vib.start(t);
+    vib.stop(t + dur + 1.2);
+  };
+
+  const desah = (t: number, dur: number, f: number, q: number, puncak: number, serang: number, tipe: BiquadFilterType = 'bandpass') => {
+    const s = ctx.createBufferSource();
+    s.buffer = derau;
+    const fl = ctx.createBiquadFilter();
+    fl.type = tipe;
+    fl.frequency.value = f;
+    fl.Q.value = q;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(puncak, t + serang);
+    g.gain.setTargetAtTime(0, t + serang, (dur - serang) / 3);
+    s.connect(fl).connect(g).connect(kering);
+    s.start(t, Math.random() * 0.5);
+    s.stop(t + dur + 0.1);
+  };
+  const brush = (t: number, vel: number) => desah(t, 0.32, 2200, 0.5, 0.018 * vel, 0.06);
+  const tik = (t: number, vel: number) => desah(t, 0.08, 7500, 0.6, 0.006 * vel, 0.002, 'highpass');
+
+  const manusiawi = () => (Math.random() - 0.5) * 0.014;
+
+  /** Frase melodi: 2–4 nada dari nada akor + nona, register atas, bergerak bertahap. */
+  const frase = (t0: number, ketuk: number, a: Akor, alat: 'vibrafon' | 'seruling') => {
+    const kelas = new Set([...a.v, a.v[0] + 2].map(n => ((n % 12) + 12) % 12));
+    const kandidat: number[] = [];
+    for (let m = 69; m <= 81; m++) if (kelas.has(m % 12)) kandidat.push(m);
+    let i = Math.floor(Math.random() * kandidat.length);
+    const jumlah = 2 + Math.floor(Math.random() * 3);
+    let slot = 1 + Math.floor(Math.random() * 2);
+    for (let k = 0; k < jumlah && slot < 8; k++) {
+      const t = t0 + (Math.floor(slot / 2) + (slot % 2 ? AYUN : 0)) * ketuk + manusiawi();
+      const terakhir = k === jumlah - 1;
+      if (alat === 'vibrafon') vibrafon(t, kandidat[i], 0.75 + Math.random() * 0.2);
+      else seruling(t, kandidat[i], 0.8, ketuk * (terakhir ? 1.8 : 0.9));
+      i = Math.max(0, Math.min(kandidat.length - 1, i + (Math.random() < 0.5 ? -1 : 1)));
+      slot += 2;
+    }
+  };
+
+  /** Menjadwalkan satu birama berawal di t0. */
+  const birama = (t0: number, bar: number, gaya: GayaMusik) => {
+    const prog = PROGRESI[gaya];
+    const a = prog[bar % prog.length];
+    const lanjut = prog[(bar + 1) % prog.length];
+    const ketuk = 60 / TEMPO[gaya];
+    const pada = (beat: number, and = false) => t0 + (beat + (and ? AYUN : 0)) * ketuk + manusiawi();
+
+    /* Bas: akar di ketuk 1, kelima di ketuk 3, kadang nada pendekatan ke akor berikut. */
+    const akar = keRentang(a.b, 33, 45);
+    const akarLanjut = keRentang(lanjut.b, 33, 45);
+    bas(pada(0), akar, 1, ketuk * 1.9);
+    const kelima = akar + 7 <= 50 ? akar + 7 : akar - 5;
+    if (gaya === 'perpus' && Math.random() < 0.5) {
+      bas(pada(2), kelima, 0.8, ketuk * 0.95);
+      bas(pada(3), akarLanjut - 1, 0.7, ketuk * 0.9);
+    } else bas(pada(2), kelima, 0.8, ketuk * 1.9);
+
+    if (gaya === 'perpus') {
+      /* Piano: satu akor lembut per birama (digulung tipis), kadang diulang pelan. */
+      const panjangAkor = Math.random() < 0.6 ? ketuk * 3.6 : ketuk * 1.8;
+      a.v.forEach((n, i) => piano(pada(0) + i * 0.014, n, 0.8 + Math.random() * 0.15, panjangAkor));
+      if (panjangAkor < ketuk * 2 && Math.random() < 0.6) a.v.slice(1).forEach((n, i) => piano(pada(2) + i * 0.012, n, 0.55, ketuk * 1.7));
+      /* Brush di 2 & 4, tik ride halus. */
+      brush(pada(1), 1);
+      brush(pada(3), 1);
+      for (let i = 0; i < 4; i++) {
+        tik(pada(i), i % 2 ? 0.7 : 1);
+        if (i % 2 === 1) tik(pada(i, true), 0.5);
+      }
+      if (bar % 8 !== 7 && Math.random() < 0.3) frase(t0, ketuk, a, 'vibrafon');
+    } else {
+      /* Gitar: arpeggio naik-turun, enam petikan per birama. */
+      const v = [keRentang(a.b, 45, 52) + 12, ...a.v].sort((x, y) => x - y);
+      const urut = [0, 1, 2, 3, 2, 1];
+      const ketukan: [number, boolean][] = [[0, false], [0, true], [1, false], [2, false], [2, true], [3, false]];
+      ketukan.forEach(([b, and], i) => gitar(pada(b, and), v[urut[i] % v.length], i === 0 ? 0.95 : 0.65 + Math.random() * 0.15));
+      brush(pada(1), 0.6);
+      brush(pada(3), 0.6);
+      for (let i = 0; i < 4; i++) if (Math.random() < 0.6) tik(pada(i, true), 0.6);
+      if (bar % 8 !== 7 && Math.random() < 0.25) frase(t0, ketuk, a, 'seruling');
+    }
+  };
+
+  return { birama, ketuk: (g: GayaMusik) => 60 / TEMPO[g] };
+}
+
+/* ======================================================================
+   Audio langsung: mesin musik + suara sekitar + penjadwal.
+   ====================================================================== */
 export function buatAudio(): Audio {
   let ctx: AudioContext | null = null;
   let master: GainNode;
   let busMusik: GainNode;
   let busSekitar: GainNode;
-  let gemaKirim: GainNode;
-  let tremolo: GainNode;
-  let rhodesLp: BiquadFilterNode;
-  let derauPutih: AudioBuffer;
+  let mesin: ReturnType<typeof buatMesinMusik>;
   let derauCokelat: AudioBuffer;
+  let derauPutih: AudioBuffer;
 
   let musikNyala = false;
   let sekitarNyala = false;
   const volume: Record<Lapis, number> = { musik: 0.55, sekitar: 0.45 };
   let gaya: GayaMusik = 'perpus';
 
-  let detak = 0; // indeks ketukan
+  let bar = 0;
   let waktuBerikut = 0;
   let timer: number | null = null;
   let lapisSekitar: { berhenti(): void } | null = null;
   let kejadianSekitar = 0;
-  let desis: AudioBufferSourceNode | null = null;
 
-  /* ---------------- persiapan ---------------- */
   const siapkan = () => {
     if (ctx) return ctx;
     const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const c = new AC();
     ctx = c;
-
     const kompres = c.createDynamicsCompressor();
-    kompres.threshold.value = -18;
-    kompres.ratio.value = 3;
+    kompres.threshold.value = -14;
+    kompres.ratio.value = 2.5;
     master = c.createGain();
-    master.gain.value = 0.9;
+    master.gain.value = 0.85;
     master.connect(kompres).connect(c.destination);
 
     busMusik = c.createGain();
     busMusik.gain.value = 0;
-    busMusik.connect(master);
+    const hangat = c.createBiquadFilter();
+    hangat.type = 'lowpass';
+    hangat.frequency.value = 4800;
+    /* Instrumen sengaja pelan di sumbernya (ruang aman dari clipping), dinaikkan di sini. */
+    const angkat = c.createGain();
+    angkat.gain.value = 2.2;
+    busMusik.connect(hangat).connect(angkat).connect(master);
     busSekitar = c.createGain();
     busSekitar.gain.value = 0;
     busSekitar.connect(master);
-
-    /* Gema: respons impuls dari derau yang meluruh. */
-    const panjang = Math.floor(c.sampleRate * 2.8);
-    const ir = c.createBuffer(2, panjang, c.sampleRate);
-    for (let ch = 0; ch < 2; ch++) {
-      const d = ir.getChannelData(ch);
-      for (let i = 0; i < panjang; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / panjang, 2.6);
-    }
-    const gema = c.createConvolver();
-    gema.buffer = ir;
-    gemaKirim = c.createGain();
-    gemaKirim.gain.value = 0.28;
-    gemaKirim.connect(gema).connect(busMusik);
-
-    /* Jalur Rhodes & vibrafon: tremolo bersama → lowpass. */
-    tremolo = c.createGain();
-    const lfo = c.createOscillator();
-    lfo.frequency.value = 4.3;
-    const lfoG = c.createGain();
-    lfoG.gain.value = 0.13;
-    lfo.connect(lfoG).connect(tremolo.gain);
-    lfo.start();
-    rhodesLp = c.createBiquadFilter();
-    rhodesLp.type = 'lowpass';
-    rhodesLp.frequency.value = 2600;
-    tremolo.connect(rhodesLp);
-    rhodesLp.connect(busMusik);
-    rhodesLp.connect(gemaKirim);
+    mesin = buatMesinMusik(c, busMusik);
 
     derauPutih = c.createBuffer(1, c.sampleRate, c.sampleRate);
     const dp = derauPutih.getChannelData(0);
@@ -151,290 +332,31 @@ export function buatAudio(): Audio {
     return c;
   };
 
-  const derau = (t: number, dur: number, tujuan: AudioNode, filter: BiquadFilterType, f: number, q: number, puncak: number, serang = 0.003) => {
-    const c = ctx!;
-    const s = c.createBufferSource();
-    s.buffer = derauPutih;
-    const fl = c.createBiquadFilter();
-    fl.type = filter;
-    fl.frequency.value = f;
-    fl.Q.value = q;
-    const g = c.createGain();
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(puncak, t + serang);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    s.connect(fl).connect(g).connect(tujuan);
-    s.start(t, Math.random() * 0.5);
-    s.stop(t + dur + 0.05);
-  };
-
-  /* ---------------- instrumen ---------------- */
-  const rhodes = (t: number, m: number, vel: number, dur: number) => {
-    const c = ctx!;
-    const o = c.createOscillator();
-    o.frequency.value = hz(m);
-    const mod = c.createOscillator();
-    mod.frequency.value = hz(m);
-    const modG = c.createGain();
-    modG.gain.setValueAtTime(hz(m) * 1.5 * vel, t);
-    modG.gain.exponentialRampToValueAtTime(hz(m) * 0.04, t + 0.35);
-    mod.connect(modG).connect(o.frequency);
-    const g = c.createGain();
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.085 * vel, t + 0.006);
-    g.gain.setTargetAtTime(0.045 * vel, t + 0.02, 0.5);
-    g.gain.setTargetAtTime(0, t + dur, 0.35);
-    o.connect(g).connect(tremolo);
-    o.start(t);
-    mod.start(t);
-    o.stop(t + dur + 2);
-    mod.stop(t + dur + 2);
-  };
-
-  const vibrafon = (t: number, m: number, vel: number) => {
-    const c = ctx!;
-    const g = c.createGain();
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.07 * vel, t + 0.004);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 2.6);
-    g.connect(tremolo);
-    for (const [k, a, d] of [[1, 1, 2.6], [4, 0.25, 0.25], [10, 0.06, 0.08]] as const) {
-      const o = c.createOscillator();
-      o.frequency.value = hz(m) * k;
-      const og = c.createGain();
-      og.gain.setValueAtTime(a, t);
-      og.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      o.connect(og).connect(g);
-      o.start(t);
-      o.stop(t + 2.7);
-    }
-  };
-
-  const seruling = (t: number, m: number, vel: number, dur: number) => {
-    const c = ctx!;
-    const o = c.createOscillator();
-    o.frequency.value = hz(m);
-    const vib = c.createOscillator();
-    vib.frequency.value = 5;
-    const vibG = c.createGain();
-    vibG.gain.setValueAtTime(0, t);
-    vibG.gain.linearRampToValueAtTime(hz(m) * 0.006, t + 0.35);
-    vib.connect(vibG).connect(o.frequency);
-    const lp = c.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 2200;
-    const g = c.createGain();
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.05 * vel, t + 0.09);
-    g.gain.setTargetAtTime(0, t + dur, 0.18);
-    o.connect(lp).connect(g);
-    g.connect(busMusik);
-    g.connect(gemaKirim);
-    o.start(t);
-    vib.start(t);
-    o.stop(t + dur + 1);
-    vib.stop(t + dur + 1);
-    derau(t, 0.12, g, 'bandpass', hz(m) * 2, 1, 0.08, 0.03);
-  };
-
-  /** Gitar petik: Karplus-Strong (letupan derau ke lingkar tunda berumpan balik). */
-  const gitar = (t: number, m: number, vel: number) => {
-    const c = ctx!;
-    const f = hz(m);
-    const s = c.createBufferSource();
-    s.buffer = derauPutih;
-    const letup = c.createGain();
-    letup.gain.setValueAtTime(0.5 * vel, t);
-    letup.gain.exponentialRampToValueAtTime(0.0001, t + Math.min(0.03, 2 / f + 0.004));
-    const tunda = c.createDelay(0.05);
-    tunda.delayTime.value = 1 / f;
-    const lp = c.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.value = 2400 + vel * 1600;
-    const umpan = c.createGain();
-    umpan.gain.value = 0.986;
-    const keluar = c.createGain();
-    keluar.gain.setValueAtTime(0.55, t);
-    keluar.gain.setTargetAtTime(0, t + 2.2, 0.4);
-    s.connect(letup).connect(tunda);
-    tunda.connect(lp).connect(umpan).connect(tunda);
-    lp.connect(keluar);
-    keluar.connect(busMusik);
-    keluar.connect(gemaKirim);
-    s.start(t, Math.random() * 0.5);
-    s.stop(t + 0.05);
-    const lepas = (t - c.currentTime + 4) * 1000;
-    window.setTimeout(() => {
-      tunda.disconnect();
-      umpan.disconnect();
-      lp.disconnect();
-      keluar.disconnect();
-    }, Math.max(0, lepas));
-  };
-
-  const bas = (t: number, m: number, vel: number, dur: number) => {
-    const c = ctx!;
-    const g = c.createGain();
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.32 * vel, t + 0.012);
-    g.gain.setTargetAtTime(0.16 * vel, t + 0.03, 0.18);
-    g.gain.setTargetAtTime(0, t + dur * 0.92, 0.07);
-    const lp = c.createBiquadFilter();
-    lp.type = 'lowpass';
-    lp.frequency.setValueAtTime(900, t);
-    lp.frequency.exponentialRampToValueAtTime(380, t + 0.25);
-    for (const [tipe, k, a] of [['triangle', 1, 1], ['sine', 0.5, 0.6]] as const) {
-      const o = c.createOscillator();
-      o.type = tipe;
-      o.frequency.value = hz(m) * k;
-      const og = c.createGain();
-      og.gain.value = a;
-      o.connect(og).connect(lp);
-      o.start(t);
-      o.stop(t + dur + 0.6);
-    }
-    lp.connect(g).connect(busMusik);
-  };
-
-  const ride = (t: number, vel: number) => {
-    derau(t, 0.42, busMusik, 'highpass', 7200, 0.5, 0.022 * vel);
-    const c = ctx!;
-    const o = c.createOscillator();
-    o.type = 'square';
-    o.frequency.value = 5200 + Math.random() * 80;
-    const g = c.createGain();
-    g.gain.setValueAtTime(0.0035 * vel, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
-    const hp = c.createBiquadFilter();
-    hp.type = 'highpass';
-    hp.frequency.value = 4000;
-    o.connect(hp).connect(g).connect(busMusik);
-    o.start(t);
-    o.stop(t + 0.32);
-  };
-  const brush = (t: number, vel: number) => derau(t, 0.32, busMusik, 'bandpass', 2600, 0.6, 0.05 * vel, 0.05);
-  const shaker = (t: number, vel: number) => derau(t, 0.07, busMusik, 'highpass', 6500, 0.7, 0.012 * vel, 0.01);
-  const kick = (t: number, vel: number) => {
-    const c = ctx!;
-    const o = c.createOscillator();
-    o.frequency.setValueAtTime(95, t);
-    o.frequency.exponentialRampToValueAtTime(44, t + 0.12);
-    const g = c.createGain();
-    g.gain.setValueAtTime(0.22 * vel, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
-    o.connect(g).connect(busMusik);
-    o.start(t);
-    o.stop(t + 0.36);
-  };
-
-  /* ---------------- penyusun birama ---------------- */
-  const nadaAkor = (a: Akor) => {
-    /* Nada akor yang ditaruh di rentang bas, di atas akarnya. */
-    return [...new Set(a.v.map(n => a.b + ((((n - a.b) % 12) + 12) % 12)))].filter(n => n !== a.b).sort((x, y) => x - y);
-  };
-  const manusiawi = () => (Math.random() - 0.5) * 0.018;
-
-  const jadwalBirama = (t0: number, bar: number) => {
-    const prog = PROGRESI[gaya];
-    const a = prog[bar % prog.length];
-    const lanjut = prog[(bar + 1) % prog.length];
-    const ketuk = 60 / TEMPO[gaya];
-    const pada = (beat: number, and = false) => t0 + (beat + (and ? AYUN : 0)) * ketuk + manusiawi();
-    const tones = nadaAkor(a);
-
-    if (gaya === 'perpus') {
-      /* Rhodes: pukulan akor dengan sedikit "strum", kadang antisipasi akor berikut. */
-      const akor = (t: number, v: number[], vel: number, dur: number) => v.forEach((n, i) => rhodes(t + i * 0.011, n, vel * (0.85 + Math.random() * 0.2), dur));
-      if (Math.random() < 0.88) akor(pada(0), a.v, 0.9, ketuk * (Math.random() < 0.5 ? 1.6 : 2.6));
-      if (Math.random() < 0.35) akor(pada(1, true), a.v.slice(1), 0.6, ketuk * 0.6);
-      if (Math.random() < 0.3) akor(pada(2), a.v, 0.65, ketuk * 1.2);
-      if (Math.random() < 0.28) akor(pada(3, true), lanjut.v, 0.7, ketuk * 1.4);
-
-      /* Bas walking: akar, nada akor, nada akor, pendekatan kromatis. */
-      const garis = [a.b, pilih(tones) ?? a.b + 7, pilih([a.b + 7, ...tones]), lanjut.b + (Math.random() < 0.5 ? -1 : 1)];
-      garis.forEach((n, i) => {
-        let m = n;
-        while (m > 50) m -= 12;
-        while (m < 31) m += 12;
-        bas(pada(i), m, i === 0 ? 1 : 0.8, ketuk);
-      });
-
-      /* Ride: ding, ding-ga, ding, ding-ga. Brush di 2 & 4, kick halus. */
-      for (let i = 0; i < 4; i++) {
-        ride(pada(i), i % 2 ? 0.7 : 1);
-        if (i % 2 === 1) {
-          ride(pada(i, true), 0.5);
-          brush(pada(i), 0.9);
-        }
-      }
-      if (Math.random() < 0.6) kick(pada(0), 0.8);
-      if (Math.random() < 0.25) kick(pada(2), 0.6);
-
-      /* Vibrafon: frase pendek sesekali, dari nada akor + nona. */
-      if (bar % 8 !== 7 && Math.random() < 0.42) frase(t0, ketuk, a, 'vibrafon');
-    } else {
-      /* Gitar: arpeggio terbuka, satu nada tiap ketukan + sesekali di "and". */
-      const v = [a.b + 12, ...a.v];
-      const pola = [0, 2, 1, 3, 2, 4, 3, 1];
-      for (let i = 0; i < 4; i++) {
-        gitar(pada(i), v[pola[i * 2] % v.length], i === 0 ? 0.95 : 0.7);
-        if (Math.random() < 0.65) gitar(pada(i, true), v[pola[i * 2 + 1] % v.length], 0.5);
-      }
-      /* Bas setengah-nada: akar lalu kelima. */
-      let akar = a.b;
-      while (akar > 45) akar -= 12;
-      bas(pada(0), akar, 0.9, ketuk * 1.9);
-      bas(pada(2), akar + 7 > 50 ? akar - 5 : akar + 7, 0.7, ketuk * 1.9);
-      brush(pada(1), 0.55);
-      brush(pada(3), 0.55);
-      for (let i = 0; i < 4; i++) if (Math.random() < 0.7) shaker(pada(i, true), 0.6);
-      if (bar % 8 !== 7 && Math.random() < 0.32) frase(t0, ketuk, a, 'seruling');
-    }
-  };
-
-  /** Frase melodi: 2–5 nada pada kisi seperdelapan berayun, di register atas. */
-  const frase = (t0: number, ketuk: number, a: Akor, alat: 'vibrafon' | 'seruling') => {
-    const kelas = [...new Set([...a.v, a.v[0] + 2].map(n => n % 12))];
-    const kandidat: number[] = [];
-    for (let m = 67; m <= 81; m++) if (kelas.includes(m % 12)) kandidat.push(m);
-    let n = pilih(kandidat);
-    const jumlah = 2 + Math.floor(Math.random() * 4);
-    let slot = Math.floor(Math.random() * 3);
-    for (let i = 0; i < jumlah && slot < 8; i++) {
-      const t = t0 + (Math.floor(slot / 2) + (slot % 2 ? AYUN : 0)) * ketuk + manusiawi();
-      const lama = ketuk * (i === jumlah - 1 ? 1.6 : 0.55);
-      if (alat === 'vibrafon') vibrafon(t, n, 0.8 + Math.random() * 0.2);
-      else seruling(t, n, 0.8, lama);
-      const idx = kandidat.indexOf(n) + (Math.random() < 0.5 ? -1 : 1) * (1 + Math.floor(Math.random() * 2));
-      n = kandidat[Math.max(0, Math.min(kandidat.length - 1, idx))];
-      slot += 1 + Math.floor(Math.random() * 2);
-    }
-  };
-
   /* ---------------- suara sekitar ---------------- */
   const mulaiSekitar = () => {
     const c = ctx!;
     lapisSekitar?.berhenti();
-    const simpul: AudioScheduledSourceNode[] = [];
-    const sambung: AudioNode[] = [];
+    const sumber: AudioScheduledSourceNode[] = [];
+    const simpul: AudioNode[] = [];
     const lapis = c.createGain();
     lapis.gain.value = 0;
     lapis.gain.setTargetAtTime(1, c.currentTime, 1.2);
     lapis.connect(busSekitar);
-    sambung.push(lapis);
-    const putar = (buf: AudioBuffer, f: BiquadFilterType, freq: number, g: number) => {
+    simpul.push(lapis);
+    const putar = (f: BiquadFilterType, freq: number, g: number, q = 0.7) => {
       const s = c.createBufferSource();
-      s.buffer = buf;
+      s.buffer = derauCokelat;
       s.loop = true;
       const fl = c.createBiquadFilter();
       fl.type = f;
       fl.frequency.value = freq;
+      fl.Q.value = q;
       const gn = c.createGain();
       gn.gain.value = g;
       s.connect(fl).connect(gn).connect(lapis);
       s.start(c.currentTime, Math.random() * 3);
-      simpul.push(s);
-      sambung.push(fl, gn);
+      sumber.push(s);
+      simpul.push(fl, gn);
       return { fl, gn };
     };
     const lfo = (target: AudioParam, frek: number, dalam: number) => {
@@ -444,62 +366,74 @@ export function buatAudio(): Audio {
       g.gain.value = dalam;
       o.connect(g).connect(target);
       o.start();
-      simpul.push(o);
-      sambung.push(g);
+      sumber.push(o);
+      simpul.push(g);
     };
-
     if (gaya === 'perpus') {
-      putar(derauCokelat, 'lowpass', 650, 0.22);
+      putar('lowpass', 500, 0.2);
     } else {
-      /* Angin berembus pelan. */
-      const angin = putar(derauCokelat, 'bandpass', 520, 0.5);
-      angin.fl.Q.value = 0.6;
-      lfo(angin.fl.frequency, 0.07, 220);
-      lfo(angin.gn.gain, 0.05, 0.22);
-      /* Riak air di tiang dermaga. */
-      const riak = putar(derauCokelat, 'lowpass', 300, 0.35);
-      lfo(riak.gn.gain, 0.31, 0.18);
-      lfo(riak.gn.gain, 0.47, 0.12);
+      const angin = putar('bandpass', 480, 0.4, 0.5);
+      lfo(angin.fl.frequency, 0.07, 160);
+      lfo(angin.gn.gain, 0.05, 0.16);
+      const riak = putar('lowpass', 280, 0.3);
+      lfo(riak.gn.gain, 0.29, 0.12);
+      lfo(riak.gn.gain, 0.43, 0.08);
     }
     kejadianSekitar = c.currentTime + 2;
     lapisSekitar = {
       berhenti() {
-        const t = c.currentTime;
-        lapis.gain.setTargetAtTime(0, t, 0.5);
+        lapis.gain.setTargetAtTime(0, c.currentTime, 0.5);
         window.setTimeout(() => {
-          simpul.forEach(s => {
+          sumber.forEach(s => {
             try {
               s.stop();
             } catch {
               /* sudah berhenti */
             }
           });
-          sambung.forEach(n => n.disconnect());
+          simpul.forEach(n => n.disconnect());
         }, 3000);
       },
     };
   };
 
+  const halaman = (t: number) => {
+    const c = ctx!;
+    const s = c.createBufferSource();
+    s.buffer = derauPutih;
+    const fl = c.createBiquadFilter();
+    fl.type = 'bandpass';
+    fl.frequency.value = 1500 + Math.random() * 800;
+    fl.Q.value = 0.8;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.02, t + 0.12);
+    g.gain.setTargetAtTime(0, t + 0.15, 0.08);
+    s.connect(fl).connect(g).connect(busSekitar);
+    s.start(t);
+    s.stop(t + 0.6);
+  };
+
   const kicau = (t: number) => {
     const c = ctx!;
     const pan = c.createStereoPanner();
-    pan.pan.value = Math.random() * 1.6 - 0.8;
+    pan.pan.value = Math.random() * 1.4 - 0.7;
     pan.connect(busSekitar);
-    const dasar = 2600 + Math.random() * 1800;
-    const n = 2 + Math.floor(Math.random() * 4);
+    const dasar = 2400 + Math.random() * 1200;
+    const n = 2 + Math.floor(Math.random() * 3);
     for (let i = 0; i < n; i++) {
-      const s = t + i * (0.11 + Math.random() * 0.08);
+      const s = t + i * (0.12 + Math.random() * 0.08);
       const o = c.createOscillator();
       o.frequency.setValueAtTime(dasar, s);
-      o.frequency.exponentialRampToValueAtTime(dasar * (1.25 + Math.random() * 0.3), s + 0.04);
-      o.frequency.exponentialRampToValueAtTime(dasar * 0.85, s + 0.09);
+      o.frequency.linearRampToValueAtTime(dasar * 1.25, s + 0.04);
+      o.frequency.linearRampToValueAtTime(dasar * 0.9, s + 0.09);
       const g = c.createGain();
       g.gain.setValueAtTime(0, s);
-      g.gain.linearRampToValueAtTime(0.03, s + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.1);
+      g.gain.linearRampToValueAtTime(0.012, s + 0.015);
+      g.gain.setTargetAtTime(0, s + 0.05, 0.02);
       o.connect(g).connect(pan);
       o.start(s);
-      o.stop(s + 0.12);
+      o.stop(s + 0.2);
     }
     window.setTimeout(() => pan.disconnect(), (t - c.currentTime + 2) * 1000);
   };
@@ -510,22 +444,21 @@ export function buatAudio(): Audio {
     const c = ctx;
     if (!c) return;
     if (musikNyala) {
-      const ketuk = 60 / TEMPO[gaya];
       if (waktuBerikut < c.currentTime) waktuBerikut = c.currentTime + 0.1;
       while (waktuBerikut < c.currentTime + LOOKAHEAD) {
-        if (detak % 4 === 0) jadwalBirama(waktuBerikut, detak / 4);
-        waktuBerikut += ketuk;
-        detak++;
+        mesin.birama(waktuBerikut, bar, gaya);
+        waktuBerikut += mesin.ketuk(gaya) * 4;
+        bar++;
       }
     }
     if (sekitarNyala && c.currentTime + LOOKAHEAD > kejadianSekitar) {
       const t = Math.max(kejadianSekitar, c.currentTime + 0.05);
       if (gaya === 'gunung') {
         kicau(t);
-        kejadianSekitar = t + 2.5 + Math.random() * 6;
+        kejadianSekitar = t + 3 + Math.random() * 6;
       } else {
-        derau(t, 0.45, busSekitar, 'bandpass', 1800 + Math.random() * 1200, 0.8, 0.025, 0.12); // halaman dibalik
-        kejadianSekitar = t + 7 + Math.random() * 14;
+        halaman(t);
+        kejadianSekitar = t + 8 + Math.random() * 14;
       }
     }
   };
@@ -534,45 +467,24 @@ export function buatAudio(): Audio {
     jalan();
   };
 
-  const desisPiringan = (nyala: boolean) => {
-    const c = ctx!;
-    if (nyala && !desis && gaya === 'perpus') {
-      const buf = c.createBuffer(1, c.sampleRate * 3, c.sampleRate);
-      const d = buf.getChannelData(0);
-      for (let i = 0; i < d.length; i++) d[i] = Math.random() < 0.0009 ? (Math.random() * 2 - 1) * 0.9 : (Math.random() * 2 - 1) * 0.015;
-      desis = c.createBufferSource();
-      desis.buffer = buf;
-      desis.loop = true;
-      const hp = c.createBiquadFilter();
-      hp.type = 'highpass';
-      hp.frequency.value = 1200;
-      const g = c.createGain();
-      g.gain.value = 0.35;
-      desis.connect(hp).connect(g).connect(busMusik);
-      desis.start();
-    } else if ((!nyala || gaya !== 'perpus') && desis) {
-      desis.stop();
-      desis = null;
-    }
-  };
-
   return {
     aturMusik(nyala) {
       const c = siapkan();
       void c.resume();
-      musikNyala = nyala;
-      busMusik.gain.setTargetAtTime(nyala ? volume.musik : 0, c.currentTime, nyala ? 0.8 : 0.25);
-      if (nyala) {
+      if (nyala && !musikNyala) {
         waktuBerikut = c.currentTime + 0.15;
-        detak = 0;
+        bar = 0;
       }
-      desisPiringan(nyala);
+      musikNyala = nyala;
+      busMusik.gain.cancelScheduledValues(c.currentTime);
+      busMusik.gain.setTargetAtTime(nyala ? volume.musik : 0, c.currentTime, nyala ? 0.8 : 0.25);
       pastikanJalan();
     },
     aturSekitar(nyala) {
       const c = siapkan();
       void c.resume();
       sekitarNyala = nyala;
+      busSekitar.gain.cancelScheduledValues(c.currentTime);
       busSekitar.gain.setTargetAtTime(nyala ? volume.sekitar : 0, c.currentTime, 0.6);
       if (nyala && !lapisSekitar) mulaiSekitar();
       pastikanJalan();
@@ -582,15 +494,14 @@ export function buatAudio(): Audio {
       if (!ctx) return;
       const bus = lapis === 'musik' ? busMusik : busSekitar;
       const on = lapis === 'musik' ? musikNyala : sekitarNyala;
+      bus.gain.cancelScheduledValues(ctx.currentTime);
       bus.gain.setTargetAtTime(on ? v : 0, ctx.currentTime, 0.15);
     },
     aturGaya(g) {
       if (g === gaya) return;
       gaya = g;
       if (!ctx) return;
-      detak = 0;
-      waktuBerikut = Math.max(waktuBerikut, ctx.currentTime + 0.2);
-      desisPiringan(musikNyala);
+      bar = 0;
       if (lapisSekitar) {
         lapisSekitar.berhenti();
         lapisSekitar = null;
@@ -606,11 +517,11 @@ export function buatAudio(): Audio {
         o.frequency.value = f;
         const t = c.currentTime + i * 0.18;
         g.gain.setValueAtTime(0, t);
-        g.gain.linearRampToValueAtTime(0.12, t + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+        g.gain.linearRampToValueAtTime(0.08, t + 0.02);
+        g.gain.setTargetAtTime(0, t + 0.03, 0.5);
         o.connect(g).connect(master);
         o.start(t);
-        o.stop(t + 2.3);
+        o.stop(t + 2.5);
       });
     },
     tutup() {

@@ -10,7 +10,7 @@ export interface Tempat {
   ket: string;
   siap: boolean;
   /** Gaya musik jazz yang diputar. */
-  musik: 'perpus' | 'gunung';
+  musik: 'perpus' | 'gunung' | 'pantai';
   /** Teks layar muat. */
   muat: string;
   /** Warna latar sebelum adegan tampil. */
@@ -37,6 +37,16 @@ export const TEMPAT: Tempat[] = [
     musik: 'gunung',
     muat: 'Mendirikan tenda di Ranu Kumbolo…',
     latar: '#2a2a33',
+  },
+  {
+    id: 'maladewa',
+    nama: 'Pantai Maladewa',
+    lokasi: 'Vaadhoo, Maladewa · malam',
+    ket: 'Meja di atas pasir, ombak berpendar biru (bioluminesensi), Bima Sakti di atas laut.',
+    siap: true,
+    musik: 'pantai',
+    muat: 'Menyalakan lautan bintang di Maladewa…',
+    latar: '#03060f',
   },
   {
     id: 'kampus',

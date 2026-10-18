@@ -5,6 +5,8 @@
    ulang secara acak sehingga tidak pernah persis sama.
    - 'perpus' (Starfield): electric piano lembut, bas, brush, vibrafon sesekali.
    - 'gunung' (Ranu Kumbolo): gitar petik, bas, shaker halus, seruling sesekali.
+   - 'pantai' (Maladewa): bossa nova, gitar nilon sinkopasi, bas bertitik,
+     shaker & rim click halus, vibrafon sesekali.
 
    Semua instrumen dibangun dari gelombang sinus (aditif) dengan amplop halus.
    Sengaja TANPA lingkar umpan balik (DelayNode dalam siklus dijepit minimal
@@ -12,13 +14,13 @@
    kotak. Keluaran musik melewati lowpass hangat sebelum kompresor.
 
    Suara sekitar: dengung ruang + halaman dibalik (perpus); angin, riak air,
-   dan kicau burung (gunung).
+   dan kicau burung (gunung); ombak tiap ~7 detik + jangkrik malam (pantai).
 
    `buatMesinMusik` bisa dijalankan di OfflineAudioContext untuk diuji
    (puncak, kenyaringan, kekasaran) tanpa harus mendengarkan.
    ========================================================================== */
 
-export type GayaMusik = 'perpus' | 'gunung';
+export type GayaMusik = 'perpus' | 'gunung' | 'pantai';
 type Lapis = 'musik' | 'sekitar';
 
 export interface Audio {
@@ -60,8 +62,19 @@ const PROGRESI: Record<GayaMusik, Akor[]> = {
     { b: 43, v: [54, 59, 62, 66] },
     { b: 45, v: [55, 57, 62, 64] },
   ],
+  /* C mayor, bossa: Cmaj9 Am9 Dm9 G13 | Em7 A9 Dm9 G7sus */
+  pantai: [
+    { b: 36, v: [52, 55, 59, 62] },
+    { b: 45, v: [55, 59, 60, 64] },
+    { b: 38, v: [53, 57, 60, 64] },
+    { b: 43, v: [53, 57, 59, 64] },
+    { b: 40, v: [55, 59, 62, 64] },
+    { b: 45, v: [55, 59, 61, 64] },
+    { b: 38, v: [53, 57, 60, 64] },
+    { b: 43, v: [53, 57, 60, 62] },
+  ],
 };
-export const TEMPO: Record<GayaMusik, number> = { perpus: 72, gunung: 66 };
+export const TEMPO: Record<GayaMusik, number> = { perpus: 72, gunung: 66, pantai: 70 };
 const AYUN = 0.62;
 
 const hz = (m: number) => 440 * 2 ** ((m - 69) / 12);
@@ -139,13 +152,13 @@ export function buatMesinMusik(ctx: BaseAudioContext, tujuan: AudioNode) {
   const vibrafon = (t: number, m: number, vel: number) =>
     aditif(t, hz(m), 0.04 * vel, [[1, 1, 2.8], [4, 0.12, 0.35]], t + 3, tremolo, 0.004);
 
-  const gitar = (t: number, m: number, vel: number) => {
+  const gitar = (t: number, m: number, vel: number, dur = 2.6) => {
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
     lp.frequency.setValueAtTime(3200, t);
     lp.frequency.exponentialRampToValueAtTime(1100, t + 0.35);
     lp.connect(kering);
-    aditif(t, hz(m), 0.042 * vel, [[1, 1, 2.4], [2, 0.42, 1.3], [3, 0.2, 0.7], [4, 0.09, 0.4], [5, 0.04, 0.25]], t + 2.6, lp, 0.003);
+    aditif(t, hz(m), 0.042 * vel, [[1, 1, 2.4], [2, 0.42, 1.3], [3, 0.2, 0.7], [4, 0.09, 0.4], [5, 0.04, 0.25]], t + dur, lp, 0.003);
   };
 
   const bas = (t: number, m: number, vel: number, dur: number) => {
@@ -200,6 +213,7 @@ export function buatMesinMusik(ctx: BaseAudioContext, tujuan: AudioNode) {
   };
   const brush = (t: number, vel: number) => desah(t, 0.32, 2200, 0.5, 0.018 * vel, 0.06);
   const tik = (t: number, vel: number) => desah(t, 0.08, 7500, 0.6, 0.006 * vel, 0.002, 'highpass');
+  const rim = (t: number, vel: number) => desah(t, 0.05, 1900, 3, 0.012 * vel, 0.001);
 
   const manusiawi = () => (Math.random() - 0.5) * 0.014;
 
@@ -234,7 +248,13 @@ export function buatMesinMusik(ctx: BaseAudioContext, tujuan: AudioNode) {
     const akarLanjut = keRentang(lanjut.b, 33, 45);
     bas(pada(0), akar, 1, ketuk * 1.9);
     const kelima = akar + 7 <= 50 ? akar + 7 : akar - 5;
-    if (gaya === 'perpus' && Math.random() < 0.5) {
+    if (gaya === 'pantai') {
+      /* Bas bossa bertitik: 1 … (2-and) 3 … (4-and), bukan ayun. */
+      const lurus = (b: number) => t0 + b * ketuk + manusiawi();
+      bas(lurus(1.5), kelima, 0.7, ketuk * 0.45);
+      bas(lurus(2), kelima, 0.8, ketuk * 1.4);
+      bas(lurus(3.5), akarLanjut, 0.65, ketuk * 0.45);
+    } else if (gaya === 'perpus' && Math.random() < 0.5) {
       bas(pada(2), kelima, 0.8, ketuk * 0.95);
       bas(pada(3), akarLanjut - 1, 0.7, ketuk * 0.9);
     } else bas(pada(2), kelima, 0.8, ketuk * 1.9);
@@ -252,6 +272,17 @@ export function buatMesinMusik(ctx: BaseAudioContext, tujuan: AudioNode) {
         if (i % 2 === 1) tik(pada(i, true), 0.5);
       }
       if (bar % 8 !== 7 && Math.random() < 0.3) frase(t0, ketuk, a, 'vibrafon');
+    } else if (gaya === 'pantai') {
+      /* Gitar nilon bossa: pola sinkopasi dua birama pada kisi seperdelapan lurus. */
+      const pola = bar % 2 === 0 ? [0, 2, 5, 7] : [1, 3, 4, 6];
+      for (const p of pola) {
+        const t = t0 + (p / 2) * ketuk + manusiawi();
+        a.v.forEach((n, i) => gitar(t + i * 0.008, n, 0.42 + Math.random() * 0.1, ketuk * 0.42));
+      }
+      /* Shaker tiap seperdelapan (aksen di off-beat), rim click pola clave. */
+      for (let i = 0; i < 8; i++) tik(t0 + (i / 2) * ketuk + manusiawi(), i % 2 ? 0.9 : 0.5);
+      for (const p of bar % 2 === 0 ? [0, 3, 6] : [2, 4]) rim(t0 + (p / 2) * ketuk + manusiawi(), 0.8);
+      if (bar % 8 !== 7 && Math.random() < 0.28) frase(t0, ketuk, a, 'vibrafon');
     } else {
       /* Gitar: arpeggio naik-turun, enam petikan per birama. */
       const v = [keRentang(a.b, 45, 52) + 12, ...a.v].sort((x, y) => x - y);
@@ -290,6 +321,7 @@ export function buatAudio(): Audio {
   let timer: number | null = null;
   let lapisSekitar: { berhenti(): void } | null = null;
   let kejadianSekitar = 0;
+  let kejadianLain = 0;
 
   const siapkan = () => {
     if (ctx) return ctx;
@@ -371,6 +403,11 @@ export function buatAudio(): Audio {
     };
     if (gaya === 'perpus') {
       putar('lowpass', 500, 0.2);
+    } else if (gaya === 'pantai') {
+      /* Dasar laut yang tenang + angin malam tipis. */
+      putar('lowpass', 420, 0.22);
+      const angin = putar('bandpass', 700, 0.12, 0.4);
+      lfo(angin.gn.gain, 0.06, 0.06);
     } else {
       const angin = putar('bandpass', 480, 0.4, 0.5);
       lfo(angin.fl.frequency, 0.07, 160);
@@ -412,6 +449,52 @@ export function buatAudio(): Audio {
     s.connect(fl).connect(g).connect(busSekitar);
     s.start(t);
     s.stop(t + 0.6);
+  };
+
+  /** Satu ombak menyapu pantai: gemuruh naik pelan, lalu desis buih. */
+  const ombak = (t: number) => {
+    const c = ctx!;
+    for (const [tipe, f, q, puncak, naik, turun] of [
+      ['lowpass', 520, 0.5, 0.16, 1.4, 1.2],
+      ['bandpass', 1500, 0.4, 0.05, 1.7, 1.6],
+      ['highpass', 3500, 0.5, 0.018, 2.0, 1.8],
+    ] as const) {
+      const s = c.createBufferSource();
+      s.buffer = derauCokelat;
+      const fl = c.createBiquadFilter();
+      fl.type = tipe;
+      fl.frequency.value = f;
+      fl.Q.value = q;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(puncak, t + naik);
+      g.gain.setTargetAtTime(0, t + naik, turun / 2);
+      s.connect(fl).connect(g).connect(busSekitar);
+      s.start(t, Math.random() * 2);
+      s.stop(t + naik + turun * 3);
+    }
+  };
+
+  /** Jangkrik malam: tiga denyut pendek bernada tinggi, sangat pelan. */
+  const jangkrik = (t: number) => {
+    const c = ctx!;
+    const pan = c.createStereoPanner();
+    pan.pan.value = Math.random() * 1.6 - 0.8;
+    pan.connect(busSekitar);
+    const f = 4200 + Math.random() * 600;
+    for (let i = 0; i < 3; i++) {
+      const s = t + i * 0.045;
+      const o = c.createOscillator();
+      o.frequency.value = f;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0, s);
+      g.gain.linearRampToValueAtTime(0.0045, s + 0.008);
+      g.gain.setTargetAtTime(0, s + 0.02, 0.008);
+      o.connect(g).connect(pan);
+      o.start(s);
+      o.stop(s + 0.08);
+    }
+    window.setTimeout(() => pan.disconnect(), (t - c.currentTime + 1) * 1000);
   };
 
   const kicau = (t: number) => {
@@ -456,14 +539,30 @@ export function buatAudio(): Audio {
       if (gaya === 'gunung') {
         kicau(t);
         kejadianSekitar = t + 3 + Math.random() * 6;
+      } else if (gaya === 'pantai') {
+        ombak(t);
+        kejadianSekitar = t + 7.14 + (Math.random() - 0.5) * 0.8;
       } else {
         halaman(t);
         kejadianSekitar = t + 8 + Math.random() * 14;
       }
     }
   };
+  const jangkrikJalan = () => {
+    const c = ctx;
+    if (!c || !sekitarNyala || gaya !== 'pantai') return;
+    while (kejadianLain < c.currentTime + LOOKAHEAD) {
+      const t = Math.max(kejadianLain, c.currentTime + 0.05);
+      jangkrik(t);
+      kejadianLain = t + 0.9 + Math.random() * 2.2;
+    }
+  };
   const pastikanJalan = () => {
-    if (timer == null) timer = window.setInterval(jalan, 120);
+    if (timer == null)
+      timer = window.setInterval(() => {
+        jalan();
+        jangkrikJalan();
+      }, 120);
     jalan();
   };
 

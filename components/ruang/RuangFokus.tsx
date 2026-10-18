@@ -30,6 +30,13 @@ const jepit = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const PEMBANGUN: Record<string, () => Promise<(k: Kualitas) => Adegan>> = {
   starfield: () => import('./starfield').then(m => m.bangunStarfield),
   ranukumbolo: () => import('./ranukumbolo').then(m => m.bangunRanuKumbolo),
+  maladewa: () => import('./maladewa').then(m => m.bangunMaladewa),
+};
+
+const KET_SUARA = {
+  perpus: { musik: 'Electric piano, bas betot, brush, vibrafon', sekitar: 'Dengung ruang baca, halaman dibalik' },
+  gunung: { musik: 'Gitar akustik, bas, brush, seruling', sekitar: 'Angin, riak air, kicau burung' },
+  pantai: { musik: 'Bossa nova: gitar nilon, bas, shaker, vibrafon', sekitar: 'Ombak menyapu pantai, jangkrik malam' },
 };
 
 /* Pilihan suara diingat per perangkat. Musik baru berbunyi setelah sentuhan pertama
@@ -491,8 +498,8 @@ export default function RuangFokus() {
             <div className={cn(KACA, 'absolute right-0 top-[3.25rem] w-[min(18.5rem,calc(100vw-2rem))] space-y-3 rounded-2xl p-4')}>
               {(
                 [
-                  { kunci: 'musik', vol: 'vMusik', Ikon: Music, judul: 'Musik jazz', ket: tempat.musik === 'gunung' ? 'Gitar akustik, bas, brush, seruling' : 'Electric piano, bas betot, brush, vibrafon' },
-                  { kunci: 'sekitar', vol: 'vSekitar', Ikon: tempat.musik === 'gunung' ? Trees : Volume2, judul: 'Suara sekitar', ket: tempat.musik === 'gunung' ? 'Angin, riak air, kicau burung' : 'Dengung ruang baca, halaman dibalik' },
+                  { kunci: 'musik', vol: 'vMusik', Ikon: Music, judul: 'Musik jazz', ket: KET_SUARA[tempat.musik].musik },
+                  { kunci: 'sekitar', vol: 'vSekitar', Ikon: tempat.musik === 'perpus' ? Volume2 : Trees, judul: 'Suara sekitar', ket: KET_SUARA[tempat.musik].sekitar },
                 ] as const
               ).map(({ kunci, vol, Ikon, judul, ket }) => (
                 <div key={kunci}>

@@ -18,7 +18,7 @@ halaman harian, dan asdos dibawa apa adanya. Yang berubah:
 | Login | kata sandi di env | **Supabase Auth**, satu email saja, tanpa pendaftaran |
 | Email | Senin, Rabu, Jumat | **setiap hari 06.00 WIB**, plus checklist, uang kemarin, progres SDA, PBP & Basdat |
 | Keuangan | catat manual | **scan struk (OCR)**, anggaran bulanan & per kategori, edit/hapus, cari & saring |
-| Fokus | timer di halaman harian | juga **ruang fokus 3D** (`/fokus`): sudut pandang orang pertama di **Starfield Library** (Seoul) atau dermaga kayu **Ranu Kumbolo** (Semeru) saat matahari terbit, belajar bareng si kucing hitam & teman voxel; jazz tenang + suara sekitar disintesis di peramban; seret untuk menoleh, sesi tercatat ke Harian |
+| Fokus | timer di halaman harian | juga **ruang fokus 3D** (`/fokus`): sudut pandang orang pertama di **Starfield Library** (Seoul) dermaga kayu **Ranu Kumbolo** (Semeru) saat matahari terbit, atau **pantai Maladewa** malam hari dengan ombak berpendar biru (bioluminesensi), belajar bareng si kucing hitam & teman voxel; jazz tenang + suara sekitar disintesis di peramban; seret untuk menoleh, sesi tercatat ke Harian |
 | HP | menu | tab bawah: Beranda · Matkul · Scan · Harian · Uang |
 
 **Stack:** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind 3 + cva (sama dengan design system) ·

@@ -12,3 +12,6 @@ next-env.d.ts
 *.log
 .DS_Store
 Thumbs.db
+
+# berkas hasil ekspor lokal (.ics, dll.)
+/ekspor/

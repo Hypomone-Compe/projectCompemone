@@ -81,6 +81,13 @@ export default function SiteFooter() {
               berkas cadangan dari Sandbox lama untuk memindahkan isinya ke sini.
             </p>
             <Cadangan />
+            <a
+              href="/api/kalender"
+              download
+              className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-ink underline decoration-[rgba(238,240,251,0.3)] underline-offset-4 hover:decoration-ink"
+            >
+              Unduh deadline & ujian (.ics) untuk Google Calendar
+            </a>
           </div>
         </div>
 

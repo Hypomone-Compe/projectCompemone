@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { CalendarClock, ChartLine, LayoutDashboard, ListChecks, Moon, NotebookPen, Target as IkonTarget, Timer as IkonTimer } from 'lucide-react';
 import CourseTabs, { type Tab } from '@/components/course/CourseTabs';
+import IcaicTracker from '@/components/jadwal/IcaicTracker';
+import JadwalHari from '@/components/jadwal/JadwalHari';
 import { Bar, Kosong, Reveal } from '@/components/kit';
 import { setModeKucing } from '@/lib/maskot';
 import { META, shortName } from '@/lib/courses/meta';
@@ -303,6 +305,12 @@ function SeksiKebiasaan({ hariIni }: { hariIni: string }) {
           </div>
         }
       />
+
+      {/* Jadwal semester (time-boxing) + ICAIC: kebiasaan di bawah diturunkan dari sini. */}
+      <div className="mb-2.5 grid gap-2.5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <JadwalHari hariIni={hariIni} />
+        <IcaicTracker hariIni={hariIni} />
+      </div>
 
       {aktif.length === 0 ? (
         <div className="card">

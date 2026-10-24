@@ -71,6 +71,10 @@ export interface HarianState {
   jurnal: Record<string, CatatanHari>;
   fokus: SesiFokus[];
   target: Target[];
+  /** Topik ICAIC yang sudah dikuasai: nomor topik → tanggal ditandai. */
+  icaic?: Record<string, string>;
+  /** Versi set kebiasaan dari jadwal semester yang sudah dipasang (sekali saja). */
+  jadwalTerpasang?: number;
 }
 
 /* ------------------------------------------------------------- konstanta */
@@ -79,6 +83,23 @@ export interface HarianState {
     tidak pernah tertukar saat dibaca sekilas di grafik yang sama. */
 export const WARNA_KEBIASAAN = [
   '#0f766e', '#b3106c', '#2b46f0', '#c0431f', '#7d5f00', '#12683f', '#5b21b6', '#0e7490',
+];
+
+/** Kebiasaan dari jadwal semester (lib/jadwal.ts). Dipasang otomatis sekali;
+    yang namanya sudah mirip dengan kebiasaan yang ada dilewati. */
+export const VERSI_KEBIASAAN_JADWAL = 1;
+export const KEBIASAAN_JADWAL: (Omit<Kebiasaan, 'id' | 'warna'> & { mirip: RegExp })[] = [
+  { nama: 'Bangun 05.30', ket: 'Kaki menyentuh lantai pukul 05.30, tanpa HP 15 menit pertama.', targetPekan: 7, aktif: true, mirip: /bangun/i },
+  { nama: 'Olahraga terjadwal', ket: 'Hari kerja 25 menit pagi, akhir pekan 60 menit (H-2 UAS: 30 menit).', targetPekan: 6, aktif: true, mirip: /olahraga|gerak/i },
+  { nama: 'Deep work kuliah 3 jam', ket: 'Hari kerja: minimal 3 jam deep work materi/tugas di luar kelas, sesuai blok jadwal.', targetPekan: 5, aktif: true, mirip: /deep work/i },
+  { nama: 'ICAIC (akhir pekan)', ket: 'Dua sesi topik ICAIC hari itu tuntas dan topiknya ditandai di daftar ICAIC.', targetPekan: 2, aktif: true, mirip: /icaic/i },
+  { nama: 'Side hustle: belajar baru', ket: 'Blok 2 jam topik bulan ini (Okt: CodeMender, Wiz AI, Mandiant · Nov: AI, LLMNetOps, Finance).', targetPekan: 2, aktif: true, mirip: /side hustle.*belajar/i },
+  { nama: 'Side hustle: penghasilan', ket: 'Blok 1,5 jam membangun portofolio/aset (fase belajar, bukan mengejar uang dulu).', targetPekan: 2, aktif: true, mirip: /side hustle.*penghasilan/i },
+  { nama: 'Belajar hal baru', ket: 'Satu jam skill periode 3 pekan (Editing video → Public speaking). Libur saat H-2 UAS.', targetPekan: 2, aktif: true, mirip: /hal baru/i },
+  { nama: 'Podcast + 1 catatan', ket: 'Dengar satu episode dan tulis satu ide yang bisa dipakai.', targetPekan: 2, aktif: true, mirip: /podcast/i },
+  { nama: 'Kaggle', ket: 'Sabtu malam: Playground Series atau notebook publik, terapkan topik ICAIC.', targetPekan: 1, aktif: true, mirip: /kaggle/i },
+  { nama: 'Journalling', ket: 'Isi jurnal di halaman ini sebelum tidur.', targetPekan: 7, aktif: true, mirip: /jurnal|journal/i },
+  { nama: 'Tidur sesuai jadwal', ket: 'Layar mati 23.30 di hari kerja, 22.30 di akhir pekan.', targetPekan: 7, aktif: true, mirip: /tidur/i },
 ];
 
 /** Set bawaan, hanya dipasang kalau pemakai menekan tombolnya sendiri. */

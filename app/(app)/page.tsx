@@ -8,6 +8,7 @@ import HariIni, { type SesiHariIni } from '@/components/home/HariIni';
 import HeroOrbit from '@/components/home/HeroOrbit';
 import MatkulGrid from '@/components/home/MatkulGrid';
 import Prioritas from '@/components/home/Prioritas';
+import Sekarang from '@/components/home/Sekarang';
 import { SectionHeading } from '@/components/home/SectionHeading';
 import { Marquee } from '@/components/kit';
 import { KELAS } from '@/lib/asdos';
@@ -60,6 +61,8 @@ export default function BerandaPage() {
   return (
     <>
       <HeroOrbit matkul={matkul} items={itemOrbit(matkul)} info={{ tanggal: fmtDateLong(today), minggu: mingguTeks, ujian: cur?.exam ?? null }} />
+
+      <Sekarang />
 
       <HariIni
         hari={fmtDateLong(today)}

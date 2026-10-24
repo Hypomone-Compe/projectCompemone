@@ -13,7 +13,8 @@
    dari Sandbox, jadi komponen tidak perlu tahu datanya tinggal di mana.
    ========================================================================== */
 import { useSyncExternalStore } from 'react';
-import { KEBIASAAN_BAWAAN, WARNA_KEBIASAAN, type CatatanHari, type HarianState, type Kebiasaan, type Periode, type SesiFokus, type Target } from './harian';
+import { supabaseConfigured } from './supabase/config';
+import { KEBIASAAN_BAWAAN, KEBIASAAN_JADWAL, VERSI_KEBIASAAN_JADWAL, WARNA_KEBIASAAN, type CatatanHari, type HarianState, type Kebiasaan, type Periode, type SesiFokus, type Target } from './harian';
 import { ANGGARAN_KOSONG, type Anggaran, type Investasi, type Transaksi } from './keuangan';
 import {
   investasiKeDb, isPending, pendingOps, queueDelete, queueSlice, queueUpsert, startSync,
@@ -219,6 +220,7 @@ function terapkanRemote(r: RemoteData, pertama: boolean) {
   state = next;
   simpanCache(next);
   emit();
+  if (pertama) pasangKebiasaanJadwal();
 }
 
 /** Menimpa server dengan isi `st`: semua bagian + semua baris. Baris di `hapusT`/`hapusI` dihapus. */
@@ -240,6 +242,8 @@ export function hydrate() {
   state = readAll();
   emit();
   startSync(terapkanRemote);
+  /* Tanpa Supabase tidak ada tarikan pertama dari server: pasang langsung. */
+  if (!supabaseConfigured) pasangKebiasaanJadwal();
 }
 
 export function useStore(): StoreState {
@@ -576,6 +580,31 @@ export function pakaiKebiasaanBawaan() {
   const h = getHarian();
   if (h.kebiasaan.length) return;
   writeHarian({ ...h, kebiasaan: KEBIASAAN_BAWAAN.map(k => ({ ...k, id: idBaru() })) });
+}
+
+/** Memasang kebiasaan dari jadwal semester, sekali per versi. Yang mirip dengan
+    kebiasaan yang sudah ada dilewati; yang pernah dihapus tidak dipasang ulang. */
+export function pasangKebiasaanJadwal() {
+  const h = getHarian();
+  if ((h.jadwalTerpasang ?? 0) >= VERSI_KEBIASAAN_JADWAL) return;
+  const baru: Kebiasaan[] = KEBIASAAN_JADWAL.filter(k => !h.kebiasaan.some(x => k.mirip.test(x.nama))).map((k, i) => ({
+    id: idBaru(),
+    nama: k.nama,
+    ket: k.ket,
+    targetPekan: k.targetPekan,
+    aktif: k.aktif,
+    warna: WARNA_KEBIASAAN[(h.kebiasaan.length + i) % WARNA_KEBIASAAN.length],
+  }));
+  writeHarian({ ...h, kebiasaan: [...h.kebiasaan, ...baru], jadwalTerpasang: VERSI_KEBIASAAN_JADWAL });
+}
+
+/** Menandai (tanggal) atau melepas (null) satu topik ICAIC. */
+export function tandaiIcaic(no: number, tanggal: string | null) {
+  const h = getHarian();
+  const icaic = { ...(h.icaic || {}) };
+  if (tanggal) icaic[String(no)] = tanggal;
+  else delete icaic[String(no)];
+  writeHarian({ ...h, icaic });
 }
 
 export function patchKebiasaan(id: string, patch: Partial<Kebiasaan>) {
